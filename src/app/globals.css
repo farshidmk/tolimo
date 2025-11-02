@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --color-primary: oklch(58.243% 0.16047 275.787);
+  --color-secondary: oklch(31.22% 0.12681 316.786);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.Toastify__toast {
+  font-family: "Vazirmatn", sans-serif !important; /* Persian friendly font */
+  font-size: 14px !important;
+}
+
+.Toastify__toast svg {
+  fill: white !important; /* icon color */
+}
+
+.Toastify__toast--error {
+  background-color: #dc2626 !important; /* Tailwind red-600 */
+  color: white !important;
+}
+
+.Toastify__toast--success {
+  background-color: #16a34a !important; /* Tailwind green-600 */
+  color: white !important;
+}
+
+.Toastify__toast--info {
+  background-color: #2563eb !important; /* Tailwind blue-600 */
+  color: white !important;
+}
+
+.Toastify__toast--warning {
+  background-color: #d97706 !important; /* Tailwind amber-600 */
+  color: white !important;
+}
+
+.Toastify__toast--default {
+  background-color: #374151 !important; /* Tailwind gray-700 */
+  color: white !important;
+}
