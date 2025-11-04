@@ -11,8 +11,10 @@ import { LoginFormItems, LoginResponse } from "./login.types";
 import RenderFormItem from "@/components/formItems/RenderFormItem";
 import { FormFieldInput } from "@/types/renderFormItem";
 import { useAuth } from "@/providers/AuthProvider";
+import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
+  const router = useRouter();
   const { setToken, setUserInfo } = useAuth();
   const { mutate, error, isPending } = useMutation<
     LoginResponse,
@@ -48,6 +50,8 @@ const LoginPage = () => {
           Cookies.set("userInfo", JSON.stringify(userInfo), { expires: 1 });
           setToken(res.token);
           setUserInfo(userInfo);
+
+          router.push("/confirm");
         },
       }
     );
