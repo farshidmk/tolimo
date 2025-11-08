@@ -191,7 +191,7 @@ const AuthProvider = ({ children }: Props) => {
     try {
       const response = await api.request<T>({
         ...config,
-        url: `${API_URL}/${config.url}`,
+        url: `${API_URL}${config.url}`,
         headers: {
           Authorization: `Bearer ${token}`,
           ...(config.headers || {}),

@@ -22,7 +22,7 @@ const ConfirmPage = () => {
     router.push("/login");
   }
   return (
-    <div className="h-full w-full  flex flex-col gap-1">
+    <div className="h-full w-full  flex flex-col gap-4 items-center justify-center">
       <Box component={"img"} src={userInfo.image} />
       <Typography variant="body1" fontWeight={600}>
         {userInfo.firstName} {userInfo.lastName}
@@ -32,7 +32,7 @@ const ConfirmPage = () => {
       </div>
 
       {error?.message && <ShowErrors errors={error?.message} />}
-      <div className="w-full flex items-center mt-4">
+      <div className="w-full flex items-center mt-4 justify-center">
         <Button
           variant="contained"
           color="success"
@@ -41,9 +41,11 @@ const ConfirmPage = () => {
           onClick={() => {
             mutate({
               method: "post",
-              url: "/Assessment/Confirm",
+              url: "Assessment/Confirm",
             });
           }}
+          fullWidth
+          sx={{maxWidth:"300px"}}
         >
           تایید
         </Button>

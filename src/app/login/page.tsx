@@ -4,7 +4,7 @@ import LoginIcon from "@mui/icons-material/Login";
 import { Button, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
-import { ServerCall } from "@/types/server";
+import { ServerCall, ServerResponse } from "@/types/server";
 import ShowErrors from "@/components/errors/ShowErrors";
 import Cookies from "js-cookie";
 import { LoginFormItems, LoginResponse } from "./login.types";
@@ -17,7 +17,7 @@ const LoginPage = () => {
   const router = useRouter();
   const { setToken, setUserInfo } = useAuth();
   const { mutate, error, isPending } = useMutation<
-    LoginResponse,
+    ServerResponse<LoginResponse>,
     Error,
     ServerCall<LoginFormItems>
   >({});
@@ -40,15 +40,16 @@ const LoginPage = () => {
         data,
       },
       {
-        onSuccess: (res) => {
+        onSuccess: ({data}) => {
           const userInfo = {
-            firstName: res.firstname,
-            lastName: res.lastname,
-            image: res.image,
+            firstName: data.firstname,
+            lastName: data.lastname,
+            image: data.image,
           };
-          Cookies.set("token", res.token, { expires: 1 });
+          console.log(data)
+          Cookies.set("token", data.token, { expires: 1 });
           Cookies.set("userInfo", JSON.stringify(userInfo), { expires: 1 });
-          setToken(res.token);
+          setToken(data.token);
           setUserInfo(userInfo);
 
           router.push("/confirm");
