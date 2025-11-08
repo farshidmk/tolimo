@@ -46,7 +46,6 @@ const LoginPage = () => {
             lastName: data.lastname,
             image: data.image,
           };
-          console.log(data)
           Cookies.set("token", data.token, { expires: 1 });
           Cookies.set("userInfo", JSON.stringify(userInfo), { expires: 1 });
           setToken(data.token);
