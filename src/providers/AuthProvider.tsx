@@ -170,14 +170,7 @@ const AuthProvider = ({ children }: Props) => {
     if (savedUserInfo) setUserInfo(JSON.parse(savedUserInfo));
   }, []);
 
-  // Save token in cookie whenever it changes
-  useEffect(() => {
-    if (token) {
-      Cookies.set("token", token, { expires: 7 });
-    } else {
-      Cookies.remove("token");
-    }
-  }, [token]);
+
 
   // Logout handler
   const logout = () => {
@@ -193,7 +186,7 @@ const AuthProvider = ({ children }: Props) => {
         ...config,
         url: `${API_URL}${config.url}`,
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token || Cookies.get("token")}`,
           ...(config.headers || {}),
         },
       });

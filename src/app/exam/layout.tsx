@@ -2,10 +2,12 @@
 import React from 'react'
 
 
-
-const ExamLayout = () => {
+type Props = {
+  children: React.ReactNode
+}
+const ExamLayout = ({children}: Props) => {
   return (
-    <div>ExamLayout</div>
+    <div>{children}</div>
   )
 }
 
