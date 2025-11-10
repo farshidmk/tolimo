@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/providers/AuthProvider";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -10,15 +10,13 @@ import { ServerCall, ServerResponse } from "@/types/server";
 import ShowErrors from "@/components/errors/ShowErrors";
 import { Exam } from "@/types/exam";
 import { useExamStore } from "@/hooks/useExamStore";
-
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 const ConfirmPage = () => {
   const { userInfo } = useAuth();
   const router = useRouter();
 
-
-const initializeExam = useExamStore((state) => state.initializeExam);
-
+  const initializeExam = useExamStore((state) => state.initializeExam);
 
   const { mutate, error, isPending, data, status } = useMutation<
     ServerResponse<Exam>,
@@ -26,55 +24,68 @@ const initializeExam = useExamStore((state) => state.initializeExam);
     ServerCall<void>
   >({});
 
-
-  
   useEffect(() => {
-    if(status === "success" && data?.isSuccessful){
-      console.log("first")
-      initializeExam(data.data)
-        router.push("/exam");
+    if (status === "success" && data?.isSuccessful) {
+      console.log("first");
+      initializeExam(data.data);
+      router.push("/exam");
     }
-  
-    
-  }, [data?.data, data?.isSuccessful, initializeExam, status])
-  
+  }, [data?.data, data?.isSuccessful, initializeExam, status]);
 
   return (
     <div className="h-full w-full  flex flex-col gap-4 items-center justify-center">
-      {userInfo?.image && <Box component={"img"} src={userInfo.image} />}
-      <Typography variant="body1" fontWeight={600}>
-        {userInfo.firstName} {userInfo.lastName}
-      </Typography>
-      <div>
-        <p>{CONFIRM_TEXT}</p>
-      </div>
+      <Paper>
+        <div className="h-full w-full  flex flex-col gap-4 items-center justify-center p-5 min-w-xl">
+          <Typography variant="h6" textAlign={"center"}>
+            اطلاعات کاربر
+          </Typography>
+          {userInfo?.image ? (
+            <Box
+              component={"img"}
+              src={userInfo.image}
+              sx={{ borderRadius: "50%", width: "80px", height: "80px" }}
+            />
+          ) : (
+            <AccountCircleIcon sx={{ fontSize: 80 }} />
+          )}
+          <Typography variant="body1" fontWeight={600}>
+            نام : {userInfo.firstName}
+          </Typography>
+          <Typography variant="body1" fontWeight={600}>
+            نام خانوادگی: {userInfo.lastName}
+          </Typography>
 
-      {error?.message && <ShowErrors errors={error?.message} />}
-      <div className="w-full flex items-center mt-4 justify-center">
-        <Button
-          variant="contained"
-          color="success"
-          endIcon={<CheckCircleOutlineIcon />}
-          loading={isPending}
-          onClick={() => {
-            mutate({
-              method: "get",
-              url: "Assessment/Confirm",
-            }, {
-              onSuccess: res => {
-                if(res.isSuccessful){
-                  // initializeExam(res.data)
-                  // router.push("/examp");
-                }
-              }
-            });
-          }}
-          fullWidth
-          sx={{maxWidth:"300px"}}
-        >
-          تایید
-        </Button>
-      </div>
+          {error?.message && <ShowErrors errors={error?.message} />}
+          <div className="w-full flex items-center mt-4 justify-center">
+            <Button
+              variant="contained"
+              color="success"
+              endIcon={<CheckCircleOutlineIcon />}
+              loading={isPending}
+              onClick={() => {
+                mutate(
+                  {
+                    method: "get",
+                    url: "Assessment/Confirm",
+                  },
+                  {
+                    onSuccess: (res) => {
+                      if (res.isSuccessful) {
+                        // initializeExam(res.data)
+                        // router.push("/examp");
+                      }
+                    },
+                  }
+                );
+              }}
+              fullWidth
+              sx={{ maxWidth: "300px" }}
+            >
+              تایید
+            </Button>
+          </div>
+        </div>
+      </Paper>
     </div>
   );
 };

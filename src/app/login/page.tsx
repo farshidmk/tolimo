@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import LoginIcon from "@mui/icons-material/Login";
-import { Button, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { ServerCall, ServerResponse } from "@/types/server";
@@ -40,7 +40,7 @@ const LoginPage = () => {
         data,
       },
       {
-        onSuccess: ({data}) => {
+        onSuccess: ({ data }) => {
           const userInfo = {
             firstName: data.firstname,
             lastName: data.lastname,
@@ -63,8 +63,28 @@ const LoginPage = () => {
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-3 max-w-2xl w-full p-4 rounded-lg border border-gray-500 shadow-2xl"
       >
+        <div className="w-full flex justify-center">
+          <Box
+            sx={{
+              p: 1,
+              border: (t) => `4px solid ${t.palette.primary.main}`,
+              borderRadius: "50%",
+            }}
+          >
+            <LoginIcon
+              color="primary"
+              sx={{
+                fontSize: 60,
+              }}
+            />
+          </Box>
+        </div>
         <Typography variant="h6" textAlign="center" sx={{ mb: 1 }}>
-          ورود به آزمون
+          ورود داوطلب آزمون
+        </Typography>
+        <Typography variant="body2">
+          لطفاً شماره داوطلبی که بر روی کارت ورود به جلسه درج شده و کد حضور که
+          از مراقب فنی دریافت کرده‌اید را وارد نمایید
         </Typography>
         {PASSWORD_LOGIN_FORM.map((item) => (
           <Controller
