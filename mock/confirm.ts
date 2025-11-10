@@ -4,7 +4,7 @@ export const CONFIRM_RESPONSE = {
   data: {
     sections: [
       {
-        sectiontId: "6613cefd-bbb8-f011-8b7e-0050569d34ad",
+        sectionId: "6613cefd-bbb8-f011-8b7e-0050569d34ad",
         bookletCode: "B01",
         title: "خوانداری",
         sectionType: 2,
@@ -84,7 +84,7 @@ export const CONFIRM_RESPONSE = {
         sign: null,
       },
       {
-        sectiontId: "6713cefd-bbb8-f011-8b7e-0050569d34ad",
+        sectionId: "6713cefd-bbb8-f011-8b7e-0050569d34ad",
         bookletCode: "B01",
         title: "گفتاری",
         sectionType: 5,
@@ -164,7 +164,7 @@ export const CONFIRM_RESPONSE = {
         sign: null,
       },
       {
-        sectiontId: "151cc69a-855f-4453-9fa4-7b108834bd5c",
+        sectionId: "151cc69a-855f-4453-9fa4-7b108834bd5c",
         bookletCode: "B01",
         title: "نوشتاری",
         sectionType: 3,
@@ -495,7 +495,7 @@ export const CONFIRM_RESPONSE = {
         sign: null,
       },
       {
-        sectiontId: "1e650435-40c7-4c60-bd08-8fcf9ba2f5cf",
+        sectionId: "1e650435-40c7-4c60-bd08-8fcf9ba2f5cf",
         bookletCode: "B01",
         title: "شنیداری",
         sectionType: 4,
@@ -924,7 +924,7 @@ export const CONFIRM_RESPONSE = {
         sign: null,
       },
       {
-        sectiontId: "deb087a2-b49e-42e6-b27d-ef0bebc316bc",
+        sectionId: "deb087a2-b49e-42e6-b27d-ef0bebc316bc",
         bookletCode: "B01",
         title: "معرفی",
         sectionType: 0,

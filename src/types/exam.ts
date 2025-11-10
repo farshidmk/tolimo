@@ -1,4 +1,5 @@
 import { FormObject } from "./formObject";
+import { QuestionKind } from "./question";
 
 export type Exam = {
   sections: ExamSection[];
@@ -16,7 +17,7 @@ export type Exam = {
 };
 
 export type ExamSection = {
-  sectiontId: string;
+  sectionId: string;
   bookletCode: string;
   title: string;
   sectionType: number;

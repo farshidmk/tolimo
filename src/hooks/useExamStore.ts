@@ -81,7 +81,7 @@ export const useExamStore = create<ExamState, any>(
           })),
           intervals: { sections: {} },
           examInfo: examWithoutSection,
-          activeSectionId: sortedSections?.[0].sectiontId ?? null,
+          activeSectionId: sortedSections?.[0].sectionId ?? null,
           activeSection: sortedSections[0],
           activeQuestion: sortedSections[0].questions[0],
         });
@@ -123,20 +123,20 @@ export const useExamStore = create<ExamState, any>(
 
       startSectionTimer: (sectionId) => {
         const { intervals, sections } = get();
-        const section = sections.find((s) => s.sectiontId === sectionId);
+        const section = sections.find((s) => s.sectionId === sectionId);
         if (!section || intervals.sections[sectionId]) return;
 
         const sectionInterval = setInterval(() => {
           set((state) => {
             const updatedSections = state.sections.map((s) =>
-              s.sectiontId === sectionId
+              s.sectionId === sectionId
                 ? { ...s, timeLeft: Math.max(s.timeLeft - 1, 0) }
                 : s
             );
 
-            // const isSectionRunning = updatedSections.find(s => s.sectiontId === sectionId)?.timeLeft > 0 ;
+            // const isSectionRunning = updatedSections.find(s => s.sectionId === sectionId)?.timeLeft > 0 ;
             const isSectionRunning = Boolean(
-              updatedSections.find((s) => s.sectiontId === sectionId)?.timeLeft
+              updatedSections.find((s) => s.sectionId === sectionId)?.timeLeft
             );
 
             return {
@@ -155,7 +155,7 @@ export const useExamStore = create<ExamState, any>(
             },
           },
           sections: state.sections.map((s) =>
-            s.sectiontId === sectionId ? { ...s, isRunning: true } : s
+            s.sectionId === sectionId ? { ...s, isRunning: true } : s
           ),
         }));
       },
@@ -171,7 +171,7 @@ export const useExamStore = create<ExamState, any>(
               sections: { ...state.intervals.sections, [sectionId]: undefined },
             },
             sections: state.sections.map((s) =>
-              s.sectiontId === sectionId ? { ...s, isRunning: false } : s
+              s.sectionId === sectionId ? { ...s, isRunning: false } : s
             ),
           }));
         }
@@ -180,7 +180,7 @@ export const useExamStore = create<ExamState, any>(
       updateAnsweredCount: (sectionId, value) => {
         set((state) => ({
           sections: state.sections.map((s) =>
-            s.sectiontId === sectionId ? { ...s, answeredCount: value } : s
+            s.sectionId === sectionId ? { ...s, answeredCount: value } : s
           ),
         }));
       },
@@ -202,12 +202,12 @@ export const useExamStore = create<ExamState, any>(
       endOfSection: (sectionId) => {
         const { sections } = get();
         const currentIndex = sections.findIndex(
-          (s) => s.sectiontId === sectionId
+          (s) => s.sectionId === sectionId
         );
         const nextSection = sections[currentIndex + 1];
 
         set({
-          activeSectionId: nextSection?.sectiontId ?? null,
+          activeSectionId: nextSection?.sectionId ?? null,
           activeSection: nextSection ?? null,
           activeQuestion: nextSection?.questions[0] ?? null,
         });
