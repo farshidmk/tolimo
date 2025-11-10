@@ -6,7 +6,16 @@ import React from "react";
 const ShowQuestion = () => {
   const { activeQuestion } = useExamStore();
 
-  return <div>{activeQuestion?.passages.map((passage) => passage.text)}</div>;
+  return (
+    <div>
+      {activeQuestion?.passages.map((passage) => (
+        <div
+          key={passage.passageType}
+          dangerouslySetInnerHTML={{ __html: passage.text }}
+        />
+      ))}
+    </div>
+  );
 };
 
 export default ShowQuestion;

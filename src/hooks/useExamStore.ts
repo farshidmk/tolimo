@@ -26,6 +26,15 @@ interface ExamState {
   updateAnsweredCount: (sectionId: string, value: number) => void;
   pauseDuringRequest: (sectionId: string) => Promise<void>;
   endOfSection: (sectionId: string) => void;
+
+  // Question Actions
+  reviewQuestions: () => void;
+  soundControl: () => void;
+  showHelp: () => void;
+  prevQuestion: () => void;
+  nextQuestion: () => void;
+  continueAction: () => void;
+  submitAction: () => void;
 }
 
 export const useExamStore = create<ExamState, any>(
@@ -189,8 +198,93 @@ export const useExamStore = create<ExamState, any>(
         }
       },
 
-      endOfSection(sectionId) {
-        //TODO
+      /** Ends the current section and moves to the next one (if available). */
+      endOfSection: (sectionId) => {
+        const { sections } = get();
+        const currentIndex = sections.findIndex(
+          (s) => s.sectiontId === sectionId
+        );
+        const nextSection = sections[currentIndex + 1];
+
+        set({
+          activeSectionId: nextSection?.sectiontId ?? null,
+          activeSection: nextSection ?? null,
+          activeQuestion: nextSection?.questions[0] ?? null,
+        });
+      },
+
+      /**
+       * Opens a review mode where all questions can be reviewed before submission.
+       */
+      reviewQuestions: () => {
+        console.log("Reviewing questions...");
+        // Could set a flag like isReviewMode = true if needed
+      },
+
+      /**
+       * Toggles the exam sound (e.g., play/pause audio or mute/unmute).
+       */
+      soundControl: () => {
+        console.log("Toggling sound...");
+        // Could integrate with an audio controller in the UI
+      },
+
+      /**
+       * Displays help/instructions related to the current section or question.
+       */
+      showHelp: () => {
+        console.log("Showing help information...");
+      },
+
+      /**
+       * Navigates to the previous question in the active section.
+       */
+      prevQuestion: () => {
+        const { activeSection, activeQuestion } = get();
+        if (!activeSection || !activeQuestion) return;
+
+        const questions = activeSection.questions;
+        const currentIndex = questions.findIndex(
+          (q) => q.questionId === activeQuestion.questionId
+        );
+
+        const prevQuestion = questions[currentIndex - 1] ?? activeQuestion;
+        set({ activeQuestion: prevQuestion });
+      },
+
+      /**
+       * Navigates to the next question in the active section.
+       */
+      nextQuestion: () => {
+        const { activeSection, activeQuestion } = get();
+        if (!activeSection || !activeQuestion) return;
+
+        const questions = activeSection.questions;
+        const currentIndex = questions.findIndex(
+          (q) => q.questionId === activeQuestion.questionId
+        );
+
+        const nextQuestion = questions[currentIndex + 1] ?? activeQuestion;
+        set({ activeQuestion: nextQuestion });
+      },
+
+      /**
+       * Continues the exam after a pause or section transition.
+       */
+      continueAction: () => {
+        console.log("Continuing exam...");
+        const { startSectionTimer, activeSectionId } = get();
+        if (activeSectionId) startSectionTimer(activeSectionId);
+      },
+
+      /**
+       * Submits the exam to the backend for evaluation.
+       */
+      submitAction: () => {
+        console.log("Submitting exam...");
+        const { stopExamTimer } = get();
+        stopExamTimer();
+        // Optionally, trigger a backend submission call here
       },
     }),
     {

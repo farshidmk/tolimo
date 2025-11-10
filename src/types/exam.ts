@@ -1,3 +1,5 @@
+import { FormObject } from "./formObject";
+
 export type Exam = {
   sections: ExamSection[];
   examTitle: string;
@@ -25,7 +27,7 @@ export type ExamSection = {
   minRequiredAnswers: 0;
   maxAllowedAnswers: 30;
   questions: SectionQuestion[];
-  formObjects: SectionFormObject[];
+  formObjects: FormObject[];
   isEncrypted: false;
   sign: null;
   isRunning: boolean;
@@ -308,11 +310,3 @@ export enum PassageType {
    */
   Reading = 3,
 }
-
-export type SectionFormObject = {
-  state: number;
-  label: string;
-  formObjectType: number;
-  isEncrypted: boolean;
-  sign: unknown;
-};
