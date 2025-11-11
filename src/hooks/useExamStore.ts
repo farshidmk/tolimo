@@ -6,8 +6,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 interface ExamState {
   examInfo: Omit<Exam, "sections"> | null;
-  examTimeLeft: number; // total exam time in seconds
-  sectionTimeLeft: number; // total exam time in seconds
+  examTimeLeft: number;
+  sectionTimeLeft: number;
   sections: ExamSection[];
   activeSectionId: string | null;
   activeSection: ExamSection | null;
@@ -15,17 +15,21 @@ interface ExamState {
   intervals: {
     exam?: NodeJS.Timeout;
     sections: Record<string, NodeJS.Timeout | undefined>;
+    autoNext?: NodeJS.Timeout;
   };
+
+  /** ⏳ Remaining seconds before moving to the next question */
+  questionAutoNextTimeLeft: number | null;
 
   // Actions
   initializeExam: (exam: Exam) => void;
   startExamTimer: () => void;
   stopExamTimer: () => void;
-  startSectionTimer: (sectionId: string) => void;
-  stopSectionTimer: (sectionId: string) => void;
+  startActiveSectionTimer: () => void;
+  stopActiveSectionTimer: () => void;
   updateAnsweredCount: (sectionId: string, value: number) => void;
-  pauseDuringRequest: (sectionId: string) => Promise<void>;
-  endOfSection: (sectionId: string) => void;
+  pauseDuringRequest: () => Promise<void>;
+  endOfSection: () => void;
 
   // Question Actions
   reviewQuestions: () => void;
@@ -35,9 +39,11 @@ interface ExamState {
   nextQuestion: () => void;
   continueAction: () => void;
   submitAction: () => void;
+  /** ⏱️ Starts a countdown and automatically goes to next question */
+  autoNextQuestionAfter: (seconds: number) => void;
 }
 
-export const useExamStore = create<ExamState, any>(
+export const useExamStore = create<ExamState>()(
   persist(
     (set, get) => ({
       examInfo: null,
@@ -48,42 +54,35 @@ export const useExamStore = create<ExamState, any>(
       activeQuestion: null,
       intervals: { sections: {} },
       activeSection: null,
+      questionAutoNextTimeLeft: null,
 
       initializeExam: (exam) => {
-        // const totalTime = exam.sections.reduce((sum, s) => {
-        //   const [hours, minutes, seconds] = s.sectionDuration
-        //     .split(":")
-        //     .map(Number);
-        //   return sum + (hours * 3600 + minutes * 60 + seconds);
-        // }, 0);
-
-        const { sections, ...examWithoutSection } = exam;
-        const sortedSections: ExamSection[] = exam.sections
+        const { sections, ...examInfo } = exam;
+        const sortedSections = sections
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map((section) => ({
             ...section,
-            questions: [
-              ...section.questions.map((question) => ({
-                ...question,
-                passages: [...question.passages].sort(
+            questions: section.questions
+              .sort((a, b) => a.displayOrder - b.displayOrder)
+              .map((q) => ({
+                ...q,
+                passages: q.passages.sort(
                   (a, b) => a.displayOrder - b.displayOrder
                 ),
               })),
-            ].sort((a, b) => a.displayOrder - b.displayOrder),
-          }));
-        set({
-          examTimeLeft: convertTimeToSeconds(exam.defaultDuration),
-          sections: sortedSections.map((s) => ({
-            ...s,
-            // timeLeft: s.sectionDuration.split(':').reduce((acc, time) => (60 * acc) + parseInt(time)), 0), // Convert duration to seconds
             answeredCount: 0,
             isRunning: false,
-          })),
+            timeLeft: convertTimeToSeconds(section.sectionDuration),
+          }));
+
+        set({
+          examInfo,
+          sections: sortedSections,
+          examTimeLeft: convertTimeToSeconds(exam.defaultDuration),
           intervals: { sections: {} },
-          examInfo: examWithoutSection,
-          activeSectionId: sortedSections?.[0].sectionId ?? null,
-          activeSection: sortedSections[0],
-          activeQuestion: sortedSections[0].questions[0],
+          activeSectionId: sortedSections[0]?.sectionId ?? null,
+          activeSection: sortedSections[0] ?? null,
+          activeQuestion: sortedSections[0]?.questions[0] ?? null,
         });
       },
 
@@ -92,18 +91,9 @@ export const useExamStore = create<ExamState, any>(
         if (intervals.exam) return;
 
         const examInterval = setInterval(() => {
-          set((state) => {
-            const newTimeLeft = Math.max(state.examTimeLeft - 1, 0);
-            return {
-              examTimeLeft: newTimeLeft,
-              sections: state.sections.map((section) => ({
-                ...section,
-                timeLeft: section.isRunning
-                  ? Math.max(section.timeLeft - 1, 0)
-                  : section.timeLeft,
-              })),
-            };
-          });
+          set((state) => ({
+            examTimeLeft: Math.max(state.examTimeLeft - 1, 0),
+          }));
         }, 1000);
 
         set((state) => ({
@@ -121,28 +111,27 @@ export const useExamStore = create<ExamState, any>(
         }
       },
 
-      startSectionTimer: (sectionId) => {
-        const { intervals, sections } = get();
-        const section = sections.find((s) => s.sectionId === sectionId);
-        if (!section || intervals.sections[sectionId]) return;
+      startActiveSectionTimer: () => {
+        const { activeSectionId, intervals } = get();
+        if (!activeSectionId) return;
+        if (intervals.sections[activeSectionId]) return;
 
         const sectionInterval = setInterval(() => {
           set((state) => {
             const updatedSections = state.sections.map((s) =>
-              s.sectionId === sectionId
+              s.sectionId === activeSectionId
                 ? { ...s, timeLeft: Math.max(s.timeLeft - 1, 0) }
                 : s
             );
 
-            // const isSectionRunning = updatedSections.find(s => s.sectionId === sectionId)?.timeLeft > 0 ;
-            const isSectionRunning = Boolean(
-              updatedSections.find((s) => s.sectionId === sectionId)?.timeLeft
+            const active = updatedSections.find(
+              (s) => s.sectionId === activeSectionId
             );
+            if (active && active.timeLeft <= 0) {
+              clearInterval(sectionInterval);
+            }
 
-            return {
-              sections: updatedSections,
-              activeSectionId: isSectionRunning ? sectionId : null,
-            };
+            return { sections: updatedSections };
           });
         }, 1000);
 
@@ -151,27 +140,32 @@ export const useExamStore = create<ExamState, any>(
             ...state.intervals,
             sections: {
               ...state.intervals.sections,
-              [sectionId]: sectionInterval,
+              [activeSectionId]: sectionInterval,
             },
           },
           sections: state.sections.map((s) =>
-            s.sectionId === sectionId ? { ...s, isRunning: true } : s
+            s.sectionId === activeSectionId ? { ...s, isRunning: true } : s
           ),
         }));
       },
 
-      stopSectionTimer: (sectionId) => {
-        const { intervals } = get();
-        const current = intervals.sections[sectionId];
+      stopActiveSectionTimer: () => {
+        const { activeSectionId, intervals } = get();
+        if (!activeSectionId) return;
+
+        const current = intervals.sections[activeSectionId];
         if (current) {
           clearInterval(current);
           set((state) => ({
             intervals: {
               ...state.intervals,
-              sections: { ...state.intervals.sections, [sectionId]: undefined },
+              sections: {
+                ...state.intervals.sections,
+                [activeSectionId]: undefined,
+              },
             },
             sections: state.sections.map((s) =>
-              s.sectionId === sectionId ? { ...s, isRunning: false } : s
+              s.sectionId === activeSectionId ? { ...s, isRunning: false } : s
             ),
           }));
         }
@@ -185,24 +179,24 @@ export const useExamStore = create<ExamState, any>(
         }));
       },
 
-      // Pause section timer while waiting for backend confirmation
-      pauseDuringRequest: async (sectionId) => {
-        const { stopSectionTimer, startSectionTimer } = get();
+      pauseDuringRequest: async () => {
+        const { stopActiveSectionTimer, startActiveSectionTimer } = get();
 
-        stopSectionTimer(sectionId);
+        stopActiveSectionTimer();
         try {
-          // Simulate backend request
+          // Simulate backend request delay
           await new Promise((res) => setTimeout(res, 1500));
         } finally {
-          startSectionTimer(sectionId);
+          startActiveSectionTimer();
         }
       },
 
-      /** Ends the current section and moves to the next one (if available). */
-      endOfSection: (sectionId) => {
-        const { sections } = get();
+      endOfSection: () => {
+        const { sections, activeSectionId } = get();
+        if (!activeSectionId) return;
+
         const currentIndex = sections.findIndex(
-          (s) => s.sectionId === sectionId
+          (s) => s.sectionId === activeSectionId
         );
         const nextSection = sections[currentIndex + 1];
 
@@ -243,29 +237,22 @@ export const useExamStore = create<ExamState, any>(
         const { activeSection, activeQuestion } = get();
         if (!activeSection || !activeQuestion) return;
 
-        const questions = activeSection.questions;
-        const currentIndex = questions.findIndex(
+        const index = activeSection.questions.findIndex(
           (q) => q.questionId === activeQuestion.questionId
         );
-
-        const prevQuestion = questions[currentIndex - 1] ?? activeQuestion;
-        set({ activeQuestion: prevQuestion });
+        const prev = activeSection.questions[index - 1] ?? activeQuestion;
+        set({ activeQuestion: prev });
       },
 
-      /**
-       * Navigates to the next question in the active section.
-       */
       nextQuestion: () => {
         const { activeSection, activeQuestion } = get();
         if (!activeSection || !activeQuestion) return;
 
-        const questions = activeSection.questions;
-        const currentIndex = questions.findIndex(
+        const index = activeSection.questions.findIndex(
           (q) => q.questionId === activeQuestion.questionId
         );
-
-        const nextQuestion = questions[currentIndex + 1] ?? activeQuestion;
-        set({ activeQuestion: nextQuestion });
+        const next = activeSection.questions[index + 1] ?? activeQuestion;
+        set({ activeQuestion: next });
       },
 
       /**
@@ -273,8 +260,7 @@ export const useExamStore = create<ExamState, any>(
        */
       continueAction: () => {
         console.log("Continuing exam...");
-        const { startSectionTimer, activeSectionId } = get();
-        if (activeSectionId) startSectionTimer(activeSectionId);
+        get().startActiveSectionTimer();
       },
 
       /**
@@ -282,14 +268,43 @@ export const useExamStore = create<ExamState, any>(
        */
       submitAction: () => {
         console.log("Submitting exam...");
-        const { stopExamTimer } = get();
-        stopExamTimer();
-        // Optionally, trigger a backend submission call here
+        get().stopExamTimer();
+      },
+
+      /** 🔹 Automatically goes to next question after N seconds */
+      autoNextQuestionAfter: (seconds) => {
+        const { intervals, nextQuestion } = get();
+
+        // Clear previous auto-next timer if exists
+        if (intervals.autoNext) clearInterval(intervals.autoNext);
+
+        set({ questionAutoNextTimeLeft: seconds });
+
+        const interval = setInterval(() => {
+          set((state) => {
+            if (
+              state.questionAutoNextTimeLeft &&
+              state.questionAutoNextTimeLeft > 1
+            ) {
+              return {
+                questionAutoNextTimeLeft: state.questionAutoNextTimeLeft - 1,
+              };
+            } else {
+              clearInterval(interval);
+              nextQuestion();
+              return { questionAutoNextTimeLeft: null };
+            }
+          });
+        }, 1000);
+
+        set((state) => ({
+          intervals: { ...state.intervals, autoNext: interval },
+        }));
       },
     }),
     {
-      name: "exam-storage", // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+      name: "exam-storage",
+      storage: createJSONStorage(() => sessionStorage),
     }
   )
 );
