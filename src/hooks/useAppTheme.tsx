@@ -1,5 +1,6 @@
 import { vazirFont } from "@/ui/font";
 import { createTheme } from "@mui/material";
+import { blue, pink } from "@mui/material/colors";
 
 const useAppTheme = () => {
   const theme = createTheme({
@@ -9,12 +10,12 @@ const useAppTheme = () => {
     },
     palette: {
       primary: {
-        main: "#636ed8",
+        main: blue[700],
         light: "#e8f2ff",
         contrastText: "#ffffff",
       },
       secondary: {
-        main: "#49125a",
+        main: pink[500],
         contrastText: "#000000",
       },
       text: {

@@ -6,7 +6,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { Typography } from "@mui/material";
 import { convertSecondsToTime } from "@/services/timeConvertor";
 import ExamButtons from "./_components/layout/ExamButtons";
-import useStartQuestionTimes from "./_components/question/_hooks/useStartQuestionTimes";
+import useStartQuestionTimes from "./_hooks/useStartQuestionTimes";
 import { calculatePercentage } from "@/services/percentage";
 
 type Props = {
@@ -15,16 +15,21 @@ type Props = {
 const ExamLayout = ({ children }: Props) => {
   // run timers
   useStartQuestionTimes();
-  const { examInfo, examTimeLeft, questionAutoNextTimeLeft, activeQuestion } =
-    useExamStore();
+  const {
+    examInfo,
+    examTimeLeft,
+    questionAutoNextTimeLeft,
+    activeQuestion,
+    endOfSection,
+  } = useExamStore();
 
   if (!examInfo) return null;
 
   return (
     <div className="h-full w-full">
-      <nav className="h-20 flex bg-primary ">
+      <nav className="h-20 flex bg-blue-400 ">
         <div className="h-full w-full flex items-center px-4">
-          {activeQuestion?.nextAfterSeconds && (
+          {activeQuestion && Boolean(activeQuestion?.nextAfterSeconds) && (
             <div className="h-14 w-14 rounded-full bg-white p-1 flex relative justify-center items-center overflow-hidden">
               <div
                 className={`absolute w-full bg-amber-300 transition`}
@@ -33,7 +38,7 @@ const ExamLayout = ({ children }: Props) => {
                     100 -
                     calculatePercentage(
                       questionAutoNextTimeLeft!,
-                      activeQuestion?.nextAfterSeconds
+                      activeQuestion.nextAfterSeconds
                     )
                   }%`,
                   bottom: 0, // Set the bottom to 0 to fill from the bottom
@@ -44,7 +49,7 @@ const ExamLayout = ({ children }: Props) => {
               </span>
             </div>
           )}
-          <div>
+          <div className="mx-2">
             <ExamButtons />
           </div>
           <div className="flex-1" />
@@ -57,6 +62,7 @@ const ExamLayout = ({ children }: Props) => {
             </Typography>
           </div>
         </div>
+        <button onClick={() => endOfSection()}>end of section</button>
       </nav>
       <div className="p-4">{children}</div>
     </div>

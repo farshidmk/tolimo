@@ -55,7 +55,7 @@ const ExamButtons = () => {
   };
 
   return (
-    <div>
+    <div className="flex items-center gap-2">
       {activeQuestion?.formObjects.map((formObject) =>
         formObject.state === FormObjectState.NoDisplay ? null : (
           <Button

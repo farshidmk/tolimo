@@ -259,7 +259,7 @@ export const useExamStore = create<ExamState>()(
        * Continues the exam after a pause or section transition.
        */
       continueAction: () => {
-        console.log("Continuing exam...");
+        get().nextQuestion();
         get().startActiveSectionTimer();
       },
 

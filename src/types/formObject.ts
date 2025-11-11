@@ -44,17 +44,17 @@ export enum FormObjectState {
   /**
    * فعال و قابل استفاده.
    */
-  Active = 1, // مقدار 1 باید به Active نسبت داده شود.
+  Active = 2, // مقدار 1 باید به Active نسبت داده شود.
 
   /**
    * غیرفعال و غیرقابل تعامل.
    */
-  Deactive = 2, // مقدار 2 باید به Deactive نسبت داده شود.
+  Deactive = 3, // مقدار 2 باید به Deactive نسبت داده شود.
 
   /**
    * نمایش داده نشود.
    */
-  NoDisplay = 3, // مقدار 3 باید به NoDisplay نسبت داده شود.
+  NoDisplay = 1, // مقدار 3 باید به NoDisplay نسبت داده شود.
 }
 
 /**
