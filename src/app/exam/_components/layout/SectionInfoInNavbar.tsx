@@ -11,7 +11,7 @@ const SectionInfoInNavbar = () => {
       (question) => question.questionId === activeQuestion?.questionId
     ) ?? 0;
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex gap-2 items-center justify-center w-full">
       <Typography variant="h6" sx={{ color: "white" }}>
         بخش: {activeSection?.title}
       </Typography>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Paper, Typography } from "@mui/material";
+import { Container, Paper, Typography } from "@mui/material";
 import Link from "next/link";
 
 export default function Home() {

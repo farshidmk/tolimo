@@ -7,6 +7,8 @@ type Props = {
   embeddedFile: EmbeddedFile;
 };
 const ShowEmbeddedQuestion = ({ embeddedFile }: Props) => {
+  const { activeQuestion } = useExamStore();
+
   useQuery({
     queryKey: [removeLeadingSlash(embeddedFile.fileName)],
   });
