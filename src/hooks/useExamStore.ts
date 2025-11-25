@@ -251,8 +251,14 @@ export const useExamStore = create<ExamState>()(
         const index = activeSection.questions.findIndex(
           (q) => q.questionId === activeQuestion.questionId
         );
-        const next = activeSection.questions[index + 1] ?? activeQuestion;
-        set({ activeQuestion: next });
+        // check if next question exists - if not go to next section
+        // go to next section
+        if (index + 1 === activeSection.questions.length) {
+          get().endOfSection();
+        } else {
+          const next = activeSection.questions[index + 1] ?? activeQuestion;
+          set({ activeQuestion: next });
+        }
       },
 
       /**
