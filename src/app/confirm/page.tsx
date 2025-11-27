@@ -26,7 +26,6 @@ const ConfirmPage = () => {
 
   useEffect(() => {
     if (status === "success" && data?.isSuccessful) {
-      console.log("first");
       initializeExam(data.data);
       router.push("/exam");
     }

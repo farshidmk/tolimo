@@ -7,9 +7,9 @@
  *
  * @example
  * // returns 6020
- * const seconds = convertTimeToSeconds("01:30:20");
+ * const seconds = convertStringTimeToSeconds("01:30:20");
  */
-export function convertTimeToSeconds(timeString: string): number {
+export function convertStringTimeToSeconds(timeString: string): number {
   // Split the string into hours, minutes, and seconds
   const timeParts = timeString.split(":");
 

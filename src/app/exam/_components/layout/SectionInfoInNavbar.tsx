@@ -2,10 +2,11 @@
 import { useExamStore } from "@/hooks/useExamStore";
 import { convertSecondsToTime } from "@/services/timeConvertor";
 import { Typography } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 
 const SectionInfoInNavbar = () => {
-  const { activeSection, sectionTimeLeft, activeQuestion } = useExamStore();
+  const { activeSection, activeQuestion, sectionTimeLeft } = useExamStore();
+
   const currentQuestionIndex =
     activeSection?.questions.findIndex(
       (question) => question.questionId === activeQuestion?.questionId
@@ -17,7 +18,7 @@ const SectionInfoInNavbar = () => {
       </Typography>
       <div className="bg-blue-100 py-2 px-4 rounded-xl flex items-center gap-2">
         <Typography variant="body2">
-          زمان: {convertSecondsToTime(sectionTimeLeft)}
+          زمان: {convertSecondsToTime(sectionTimeLeft ?? 0)}
         </Typography>
       </div>
       <div className="text-white">

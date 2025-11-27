@@ -1,5 +1,5 @@
 "use client";
-import { convertTimeToSeconds } from "@/services/timeConvertor";
+import { convertStringTimeToSeconds } from "@/services/timeConvertor";
 import { Exam, ExamSection, SectionQuestion } from "@/types/exam";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -72,17 +72,19 @@ export const useExamStore = create<ExamState>()(
               })),
             answeredCount: 0,
             isRunning: false,
-            timeLeft: convertTimeToSeconds(section.sectionDuration),
+            timeLeft: convertStringTimeToSeconds(section.sectionDuration),
           }));
 
+        const firstSection = sortedSections[0];
         set({
           examInfo,
           sections: sortedSections,
-          examTimeLeft: convertTimeToSeconds(exam.defaultDuration),
+          examTimeLeft: convertStringTimeToSeconds(exam.defaultDuration),
+          sectionTimeLeft: firstSection.timeLeft,
           intervals: { sections: {} },
-          activeSectionId: sortedSections[0]?.sectionId ?? null,
-          activeSection: sortedSections[0] ?? null,
-          activeQuestion: sortedSections[0]?.questions[0] ?? null,
+          activeSectionId: firstSection?.sectionId ?? null,
+          activeSection: firstSection ?? null,
+          activeQuestion: firstSection?.questions[0] ?? null,
         });
       },
 
@@ -114,8 +116,35 @@ export const useExamStore = create<ExamState>()(
       startActiveSectionTimer: () => {
         const { activeSectionId, intervals } = get();
         if (!activeSectionId) return;
+
+        // Prevent duplicate intervals
         if (intervals.sections[activeSectionId]) return;
 
+        // Initialize timeLeft if empty (parse "HH:MM:SS")
+        set((state) => {
+          const sec = state.sections.find(
+            (s) => s.sectionId === activeSectionId
+          );
+          if (!sec) return state;
+
+          if (sec.timeLeft === undefined || sec.timeLeft === null) {
+            const [h, m, s] = sec.sectionDuration.split(":").map(Number);
+            const parsedSeconds = h * 3600 + m * 60 + s;
+
+            return {
+              sections: state.sections.map((s) =>
+                s.sectionId === activeSectionId
+                  ? { ...s, timeLeft: parsedSeconds }
+                  : s
+              ),
+              sectionTimeLeft: parsedSeconds,
+            };
+          }
+
+          return state;
+        });
+
+        // Create interval
         const sectionInterval = setInterval(() => {
           set((state) => {
             const updatedSections = state.sections.map((s) =>
@@ -124,17 +153,36 @@ export const useExamStore = create<ExamState>()(
                 : s
             );
 
-            const active = updatedSections.find(
+            const activeSection = updatedSections.find(
               (s) => s.sectionId === activeSectionId
             );
-            if (active && active.timeLeft <= 0) {
+
+            // Auto-stop when time reaches zero
+            if (activeSection && activeSection.timeLeft === 0) {
               clearInterval(sectionInterval);
+              return {
+                intervals: {
+                  ...state.intervals,
+                  sections: {
+                    ...state.intervals.sections,
+                    [activeSectionId]: null,
+                  },
+                },
+                sections: updatedSections,
+                sectionTimeLeft: 0,
+              };
             }
 
-            return { sections: updatedSections };
+            return {
+              sections: updatedSections,
+              sectionTimeLeft: activeSection
+                ? activeSection.timeLeft
+                : state.sectionTimeLeft,
+            };
           });
         }, 1000);
 
+        // Save interval reference + mark running
         set((state) => ({
           intervals: {
             ...state.intervals,
@@ -204,6 +252,7 @@ export const useExamStore = create<ExamState>()(
           activeSectionId: nextSection?.sectionId ?? null,
           activeSection: nextSection ?? null,
           activeQuestion: nextSection?.questions[0] ?? null,
+          sectionTimeLeft: nextSection ? nextSection.timeLeft : 0,
         });
       },
 

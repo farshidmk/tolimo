@@ -1,6 +1,6 @@
 "use client";
 import { useExamStore } from "@/hooks/useExamStore";
-import React from "react";
+import React, { useEffect } from "react";
 import SectionInfoInNavbar from "./_components/layout/SectionInfoInNavbar";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Typography } from "@mui/material";
@@ -21,6 +21,8 @@ const ExamLayout = ({ children }: Props) => {
     questionAutoNextTimeLeft,
     activeQuestion,
     endOfSection,
+    nextQuestion,
+    startActiveSectionTimer,
   } = useExamStore();
 
   if (!examInfo) return null;
@@ -29,7 +31,7 @@ const ExamLayout = ({ children }: Props) => {
     <div className="h-full w-full">
       <nav className="h-20 flex bg-blue-400 ">
         <div className="h-full w-full flex items-center px-4">
-          <div className="flex-1">
+          <div className="flex-1 flex items-center gap-2">
             {activeQuestion && Boolean(activeQuestion?.nextAfterSeconds) && (
               <div className="h-14 w-14 rounded-full bg-white p-1 flex relative justify-center items-center overflow-hidden">
                 <div
@@ -68,6 +70,7 @@ const ExamLayout = ({ children }: Props) => {
           </div>
         </div>
         <button onClick={() => endOfSection()}>end of section</button>
+        <button onClick={() => nextQuestion()}>next question</button>
       </nav>
       <div className="p-4">{children}</div>
     </div>

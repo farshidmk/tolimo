@@ -40,8 +40,18 @@ const RenderQuestionByType = () => {
       );
     case QuestionKind.Listening_Lecture:
       return <ListeningLecture />;
+    case QuestionKind.SectionDirection:
+      return (
+        <div>
+          {activeQuestion?.passages.map((passage) => (
+            <div key={passage.passageType}>
+              <div dangerouslySetInnerHTML={{ __html: passage.text }} />
+            </div>
+          ))}
+        </div>
+      );
   }
-  return <div>RenderQuestionByType</div>;
+  return <div>RenderQuestionByType {activeQuestion?.questionType}</div>;
 };
 
 export default RenderQuestionByType;
