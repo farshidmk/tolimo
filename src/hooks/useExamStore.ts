@@ -5,6 +5,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 interface ExamState {
+  // Core State
   examInfo: Omit<Exam, "sections"> | null;
   examTimeLeft: number;
   sectionTimeLeft: number;
@@ -12,52 +13,65 @@ interface ExamState {
   activeSectionId: string | null;
   activeSection: ExamSection | null;
   activeQuestion: SectionQuestion | null;
+  questionAutoNextTimeLeft: number | null;
+
+  // Timer References (not persisted)
   intervals: {
     exam?: NodeJS.Timeout;
     sections: Record<string, NodeJS.Timeout | undefined>;
     autoNext?: NodeJS.Timeout;
   };
 
-  /** ⏳ Remaining seconds before moving to the next question */
-  questionAutoNextTimeLeft: number | null;
-
-  // Actions
+  // Initialization
   initializeExam: (exam: Exam) => void;
+
+  // Timer Controls
   startExamTimer: () => void;
   stopExamTimer: () => void;
   startActiveSectionTimer: () => void;
   stopActiveSectionTimer: () => void;
-  updateAnsweredCount: (sectionId: string, value: number) => void;
-  pauseDuringRequest: () => Promise<void>;
+
+  // Navigation
+  prevQuestion: () => void;
+  nextQuestion: () => void;
   endOfSection: () => void;
 
-  // Question Actions
+  // Actions
+  updateAnsweredCount: (sectionId: string, value: number) => void;
+  pauseDuringRequest: () => Promise<void>;
+  continueAction: () => void;
+  submitAction: () => void;
   reviewQuestions: () => void;
   soundControl: () => void;
   showHelp: () => void;
-  prevQuestion: () => void;
-  nextQuestion: () => void;
-  continueAction: () => void;
-  submitAction: () => void;
-  /** ⏱️ Starts a countdown and automatically goes to next question */
   autoNextQuestionAfter: (seconds: number) => void;
+
+  // Cleanup
+  clearAllTimers: () => void;
 }
 
 export const useExamStore = create<ExamState>()(
   persist(
     (set, get) => ({
+      // ==================== Initial State ====================
       examInfo: null,
       examTimeLeft: 0,
       sectionTimeLeft: 0,
       sections: [],
       activeSectionId: null,
-      activeQuestion: null,
-      intervals: { sections: {} },
       activeSection: null,
+      activeQuestion: null,
       questionAutoNextTimeLeft: null,
+      intervals: { sections: {} },
 
+      // ==================== Initialization ====================
       initializeExam: (exam) => {
+        // Clear any existing timers first
+        get().clearAllTimers();
+
         const { sections, ...examInfo } = exam;
+
+        // Sort and prepare sections with questions
         const sortedSections = sections
           .sort((a, b) => a.displayOrder - b.displayOrder)
           .map((section) => ({
@@ -76,26 +90,64 @@ export const useExamStore = create<ExamState>()(
           }));
 
         const firstSection = sortedSections[0];
+        const examTime = convertStringTimeToSeconds(exam.defaultDuration);
+
         set({
           examInfo,
           sections: sortedSections,
-          examTimeLeft: convertStringTimeToSeconds(exam.defaultDuration),
-          sectionTimeLeft: firstSection.timeLeft,
+          examTimeLeft: examTime,
+          sectionTimeLeft: firstSection?.timeLeft ?? 0,
           intervals: { sections: {} },
           activeSectionId: firstSection?.sectionId ?? null,
           activeSection: firstSection ?? null,
           activeQuestion: firstSection?.questions[0] ?? null,
+          questionAutoNextTimeLeft: null,
+        });
+
+        console.log("Exam initialized:", {
+          examTime,
+          sectionTime: firstSection?.timeLeft,
+          totalSections: sortedSections.length,
         });
       },
 
+      // ==================== Exam Timer ====================
       startExamTimer: () => {
-        const { intervals } = get();
-        if (intervals.exam) return;
+        const { intervals, examTimeLeft } = get();
+
+        // Don't start if already running
+        if (intervals.exam) {
+          console.log("Exam timer already running");
+          return;
+        }
+
+        // Don't start if time is already 0
+        if (examTimeLeft <= 0) {
+          console.log("Exam time is already 0");
+          return;
+        }
+
+        console.log("Starting exam timer with", examTimeLeft, "seconds");
 
         const examInterval = setInterval(() => {
-          set((state) => ({
-            examTimeLeft: Math.max(state.examTimeLeft - 1, 0),
-          }));
+          set((state) => {
+            const newTime = Math.max(state.examTimeLeft - 1, 0);
+
+            // Auto-submit when exam time runs out
+            if (newTime === 0) {
+              console.log("Exam time ended!");
+              clearInterval(examInterval);
+              // Trigger submit action
+              setTimeout(() => get().submitAction(), 100);
+
+              return {
+                examTimeLeft: 0,
+                intervals: { ...state.intervals, exam: undefined },
+              };
+            }
+
+            return { examTimeLeft: newTime };
+          });
         }, 1000);
 
         set((state) => ({
@@ -110,39 +162,44 @@ export const useExamStore = create<ExamState>()(
           set((state) => ({
             intervals: { ...state.intervals, exam: undefined },
           }));
+          console.log("Exam timer stopped");
         }
       },
 
+      // ==================== Section Timer ====================
       startActiveSectionTimer: () => {
-        const { activeSectionId, intervals } = get();
-        if (!activeSectionId) return;
+        const { activeSectionId, intervals, sections } = get();
+
+        if (!activeSectionId) {
+          console.log("No active section to start timer");
+          return;
+        }
 
         // Prevent duplicate intervals
-        if (intervals.sections[activeSectionId]) return;
+        if (intervals.sections[activeSectionId]) {
+          console.log("Section timer already running for", activeSectionId);
+          return;
+        }
 
-        // Initialize timeLeft if empty (parse "HH:MM:SS")
-        set((state) => {
-          const sec = state.sections.find(
-            (s) => s.sectionId === activeSectionId
-          );
-          if (!sec) return state;
+        const activeSection = sections.find(
+          (s) => s.sectionId === activeSectionId
+        );
+        if (!activeSection) {
+          console.log("Active section not found");
+          return;
+        }
 
-          if (sec.timeLeft === undefined || sec.timeLeft === null) {
-            const [h, m, s] = sec.sectionDuration.split(":").map(Number);
-            const parsedSeconds = h * 3600 + m * 60 + s;
+        // Don't start if time is already 0
+        if (activeSection.timeLeft <= 0) {
+          console.log("Section time is already 0");
+          return;
+        }
 
-            return {
-              sections: state.sections.map((s) =>
-                s.sectionId === activeSectionId
-                  ? { ...s, timeLeft: parsedSeconds }
-                  : s
-              ),
-              sectionTimeLeft: parsedSeconds,
-            };
-          }
-
-          return state;
-        });
+        console.log(
+          "Starting section timer with",
+          activeSection.timeLeft,
+          "seconds"
+        );
 
         // Create interval
         const sectionInterval = setInterval(() => {
@@ -153,31 +210,43 @@ export const useExamStore = create<ExamState>()(
                 : s
             );
 
-            const activeSection = updatedSections.find(
+            const currentSection = updatedSections.find(
               (s) => s.sectionId === activeSectionId
             );
 
-            // Auto-stop when time reaches zero
-            if (activeSection && activeSection.timeLeft === 0) {
+            // Auto-move to next section when time reaches zero
+            if (currentSection && currentSection.timeLeft === 0) {
+              console.log("Section time ended!");
               clearInterval(sectionInterval);
+
+              // Move to next section after a brief delay
+              setTimeout(() => get().endOfSection(), 100);
+
               return {
                 intervals: {
                   ...state.intervals,
                   sections: {
                     ...state.intervals.sections,
-                    [activeSectionId]: null,
+                    [activeSectionId]: undefined,
                   },
                 },
                 sections: updatedSections,
                 sectionTimeLeft: 0,
+                activeSection: {
+                  ...currentSection,
+                  timeLeft: 0,
+                  isRunning: false,
+                },
               };
             }
 
             return {
               sections: updatedSections,
-              sectionTimeLeft: activeSection
-                ? activeSection.timeLeft
-                : state.sectionTimeLeft,
+              sectionTimeLeft:
+                currentSection?.timeLeft ?? state.sectionTimeLeft,
+              activeSection: currentSection
+                ? { ...currentSection, isRunning: true }
+                : state.activeSection,
             };
           });
         }, 1000);
@@ -199,6 +268,7 @@ export const useExamStore = create<ExamState>()(
 
       stopActiveSectionTimer: () => {
         const { activeSectionId, intervals } = get();
+
         if (!activeSectionId) return;
 
         const current = intervals.sections[activeSectionId];
@@ -216,9 +286,93 @@ export const useExamStore = create<ExamState>()(
               s.sectionId === activeSectionId ? { ...s, isRunning: false } : s
             ),
           }));
+          console.log("Section timer stopped");
         }
       },
 
+      // ==================== Navigation ====================
+      prevQuestion: () => {
+        const { activeSection, activeQuestion } = get();
+        if (!activeSection || !activeQuestion) return;
+
+        const index = activeSection.questions.findIndex(
+          (q) => q.questionId === activeQuestion.questionId
+        );
+
+        if (index > 0) {
+          const prev = activeSection.questions[index - 1];
+          set({ activeQuestion: prev });
+          console.log("Moved to previous question:", prev.questionId);
+        }
+      },
+
+      nextQuestion: () => {
+        const { activeSection, activeQuestion, intervals } = get();
+        if (!activeSection || !activeQuestion) return;
+
+        // Clear auto-next timer if exists
+        if (intervals.autoNext) {
+          clearInterval(intervals.autoNext);
+          set((state) => ({
+            intervals: { ...state.intervals, autoNext: undefined },
+            questionAutoNextTimeLeft: null,
+          }));
+        }
+
+        const index = activeSection.questions.findIndex(
+          (q) => q.questionId === activeQuestion.questionId
+        );
+
+        // Check if this is the last question in the section
+        if (index + 1 === activeSection.questions.length) {
+          console.log("Last question reached, moving to next section");
+          get().endOfSection();
+        } else {
+          const next = activeSection.questions[index + 1];
+          set({ activeQuestion: next });
+          console.log("Moved to next question:", next.questionId);
+        }
+      },
+
+      endOfSection: () => {
+        const { sections, activeSectionId } = get();
+
+        if (!activeSectionId) return;
+
+        // Stop current section timer
+        get().stopActiveSectionTimer();
+
+        const currentIndex = sections.findIndex(
+          (s) => s.sectionId === activeSectionId
+        );
+        const nextSection = sections[currentIndex + 1];
+
+        if (nextSection) {
+          console.log("Moving to next section:", nextSection.sectionId);
+          set({
+            activeSectionId: nextSection.sectionId,
+            activeSection: nextSection,
+            activeQuestion: nextSection.questions[0] ?? null,
+            sectionTimeLeft: nextSection.timeLeft,
+          });
+
+          // Start next section timer
+          setTimeout(() => get().startActiveSectionTimer(), 100);
+        } else {
+          console.log("No more sections, ending exam");
+          set({
+            activeSectionId: null,
+            activeSection: null,
+            activeQuestion: null,
+            sectionTimeLeft: 0,
+          });
+
+          // Auto-submit exam
+          setTimeout(() => get().submitAction(), 100);
+        }
+      },
+
+      // ==================== Actions ====================
       updateAnsweredCount: (sectionId, value) => {
         set((state) => ({
           sections: state.sections.map((s) =>
@@ -228,117 +382,74 @@ export const useExamStore = create<ExamState>()(
       },
 
       pauseDuringRequest: async () => {
-        const { stopActiveSectionTimer, startActiveSectionTimer } = get();
+        const {
+          stopActiveSectionTimer,
+          stopExamTimer,
+          startActiveSectionTimer,
+          startExamTimer,
+        } = get();
 
+        // Pause all timers
         stopActiveSectionTimer();
+        stopExamTimer();
+
         try {
           // Simulate backend request delay
           await new Promise((res) => setTimeout(res, 1500));
         } finally {
+          // Resume timers
+          startExamTimer();
           startActiveSectionTimer();
         }
       },
 
-      endOfSection: () => {
-        const { sections, activeSectionId } = get();
-        if (!activeSectionId) return;
-
-        const currentIndex = sections.findIndex(
-          (s) => s.sectionId === activeSectionId
-        );
-        const nextSection = sections[currentIndex + 1];
-
-        set({
-          activeSectionId: nextSection?.sectionId ?? null,
-          activeSection: nextSection ?? null,
-          activeQuestion: nextSection?.questions[0] ?? null,
-          sectionTimeLeft: nextSection ? nextSection.timeLeft : 0,
-        });
+      continueAction: () => {
+        console.log("Continue action triggered");
+        get().nextQuestion();
+        get().startActiveSectionTimer();
       },
 
-      /**
-       * Opens a review mode where all questions can be reviewed before submission.
-       */
+      submitAction: () => {
+        console.log("Submitting exam...");
+
+        // Stop all timers
+        get().clearAllTimers();
+
+        // Here you would typically make an API call to submit the exam
+        // Example: await submitExamToBackend(get().sections);
+      },
+
       reviewQuestions: () => {
         console.log("Reviewing questions...");
         // Could set a flag like isReviewMode = true if needed
+        // Might want to pause timers during review
       },
 
-      /**
-       * Toggles the exam sound (e.g., play/pause audio or mute/unmute).
-       */
       soundControl: () => {
         console.log("Toggling sound...");
         // Could integrate with an audio controller in the UI
       },
 
-      /**
-       * Displays help/instructions related to the current section or question.
-       */
       showHelp: () => {
         console.log("Showing help information...");
       },
 
-      /**
-       * Navigates to the previous question in the active section.
-       */
-      prevQuestion: () => {
-        const { activeSection, activeQuestion } = get();
-        if (!activeSection || !activeQuestion) return;
-
-        const index = activeSection.questions.findIndex(
-          (q) => q.questionId === activeQuestion.questionId
-        );
-        const prev = activeSection.questions[index - 1] ?? activeQuestion;
-        set({ activeQuestion: prev });
-      },
-
-      nextQuestion: () => {
-        const { activeSection, activeQuestion } = get();
-        if (!activeSection || !activeQuestion) return;
-
-        const index = activeSection.questions.findIndex(
-          (q) => q.questionId === activeQuestion.questionId
-        );
-        // check if next question exists - if not go to next section
-        // go to next section
-        if (index + 1 === activeSection.questions.length) {
-          get().endOfSection();
-        } else {
-          const next = activeSection.questions[index + 1] ?? activeQuestion;
-          set({ activeQuestion: next });
-        }
-      },
-
-      /**
-       * Continues the exam after a pause or section transition.
-       */
-      continueAction: () => {
-        get().nextQuestion();
-        get().startActiveSectionTimer();
-      },
-
-      /**
-       * Submits the exam to the backend for evaluation.
-       */
-      submitAction: () => {
-        console.log("Submitting exam...");
-        get().stopExamTimer();
-      },
-
-      /** 🔹 Automatically goes to next question after N seconds */
+      // ==================== Auto-Next Question ====================
       autoNextQuestionAfter: (seconds) => {
-        const { intervals, nextQuestion } = get();
+        const { intervals } = get();
 
         // Clear previous auto-next timer if exists
-        if (intervals.autoNext) clearInterval(intervals.autoNext);
+        if (intervals.autoNext) {
+          clearInterval(intervals.autoNext);
+        }
 
         set({ questionAutoNextTimeLeft: seconds });
+        console.log("Auto-next question in", seconds, "seconds");
 
         const interval = setInterval(() => {
           set((state) => {
             if (
-              state.questionAutoNextTimeLeft &&
+              state.questionAutoNextTimeLeft !== null &&
               state.questionAutoNextTimeLeft > 1
             ) {
               return {
@@ -346,8 +457,11 @@ export const useExamStore = create<ExamState>()(
               };
             } else {
               clearInterval(interval);
-              nextQuestion();
-              return { questionAutoNextTimeLeft: null };
+              get().nextQuestion();
+              return {
+                questionAutoNextTimeLeft: null,
+                intervals: { ...state.intervals, autoNext: undefined },
+              };
             }
           });
         }, 1000);
@@ -356,10 +470,48 @@ export const useExamStore = create<ExamState>()(
           intervals: { ...state.intervals, autoNext: interval },
         }));
       },
+
+      // ==================== Cleanup ====================
+      clearAllTimers: () => {
+        const { intervals } = get();
+
+        // Clear exam timer
+        if (intervals.exam) {
+          clearInterval(intervals.exam);
+        }
+
+        // Clear all section timers
+        Object.values(intervals.sections).forEach((timer) => {
+          if (timer) clearInterval(timer);
+        });
+
+        // Clear auto-next timer
+        if (intervals.autoNext) {
+          clearInterval(intervals.autoNext);
+        }
+
+        set({
+          intervals: { sections: {} },
+          sections: get().sections.map((s) => ({ ...s, isRunning: false })),
+        });
+
+        console.log("All timers cleared");
+      },
     }),
     {
       name: "exam-storage",
       storage: createJSONStorage(() => sessionStorage),
+      // Don't persist intervals (they're runtime-only)
+      partialize: (state) => ({
+        examInfo: state.examInfo,
+        examTimeLeft: state.examTimeLeft,
+        sectionTimeLeft: state.sectionTimeLeft,
+        sections: state.sections,
+        activeSectionId: state.activeSectionId,
+        activeSection: state.activeSection,
+        activeQuestion: state.activeQuestion,
+        questionAutoNextTimeLeft: state.questionAutoNextTimeLeft,
+      }),
     }
   )
 );

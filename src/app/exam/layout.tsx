@@ -22,8 +22,15 @@ const ExamLayout = ({ children }: Props) => {
     activeQuestion,
     endOfSection,
     nextQuestion,
+    startExamTimer, // ← Add this
     startActiveSectionTimer,
   } = useExamStore();
+
+  // Start timers when component mounts
+  useEffect(() => {
+    startExamTimer(); // ← Start exam timer
+    startActiveSectionTimer(); // ← Start section timer
+  }, []); // Empty deps = run once on mount
 
   if (!examInfo) return null;
 
