@@ -3,11 +3,13 @@ import { QuestionKind } from "@/types/question";
 import React from "react";
 import SingleChoiceQuestion from "./singleChoiceQuestion/SingleChoiceQuestion";
 import ListeningLecture from "./listening/ListeningLecture";
+import RenderChoiceList from "./RenderChoiceList";
+import RenderEmbeddedFile from "../embeddedFile/RenderEmbeddedFile";
 
 const RenderQuestionByType = () => {
   const { activeQuestion } = useExamStore();
   switch (activeQuestion?.questionType) {
-    case QuestionKind.ViewOnlyPassage:
+    case QuestionKind.SectionDirection:
       return (
         <div>
           {activeQuestion?.passages.map((passage) => (
@@ -15,6 +17,7 @@ const RenderQuestionByType = () => {
               <div dangerouslySetInnerHTML={{ __html: passage.text }} />
             </div>
           ))}
+          <RenderEmbeddedFile />
         </div>
       );
     case QuestionKind.ViewOnlyPassage:
@@ -40,7 +43,7 @@ const RenderQuestionByType = () => {
       );
     case QuestionKind.Listening_Lecture:
       return <ListeningLecture />;
-    case QuestionKind.SectionDirection:
+    case QuestionKind.Listening_Question:
       return (
         <div>
           {activeQuestion?.passages.map((passage) => (
@@ -48,6 +51,7 @@ const RenderQuestionByType = () => {
               <div dangerouslySetInnerHTML={{ __html: passage.text }} />
             </div>
           ))}
+          <RenderChoiceList choiceList={activeQuestion.choiceList!} />
         </div>
       );
   }

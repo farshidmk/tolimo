@@ -3,7 +3,7 @@ import { useExamStore } from "@/hooks/useExamStore";
 import React, { useEffect } from "react";
 import SectionInfoInNavbar from "./_components/layout/SectionInfoInNavbar";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { Typography } from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
 import { convertSecondsToTime } from "@/services/timeConvertor";
 import ExamButtons from "./_components/layout/ExamButtons";
 import useStartQuestionTimes from "./_hooks/useStartQuestionTimes";
@@ -24,13 +24,39 @@ const ExamLayout = ({ children }: Props) => {
     nextQuestion,
     startExamTimer, // ← Add this
     startActiveSectionTimer,
+    stopActiveSectionTimer,
+    autoNextQuestionAfter,
+    stopExamTimer,
   } = useExamStore();
 
   // Start timers when component mounts
+  // useEffect(() => {
+  //   // startActiveSectionTimer()
+  //   startExamTimer(); // ← Start exam timer
+  //   startActiveSectionTimer(); // ← Start section timer
+  // }, []); // Empty deps = run once on mount
+
   useEffect(() => {
-    startExamTimer(); // ← Start exam timer
-    startActiveSectionTimer(); // ← Start section timer
-  }, []); // Empty deps = run once on mount
+    if (activeQuestion?.stopSectionTimer) {
+      stopExamTimer();
+      stopActiveSectionTimer();
+    } else {
+      startExamTimer();
+      startActiveSectionTimer();
+    }
+    if (activeQuestion?.nextAfterSeconds) {
+      autoNextQuestionAfter(activeQuestion.nextAfterSeconds);
+    }
+  }, [
+    activeQuestion?.stopSectionTimer,
+    activeQuestion?.questionId,
+    activeQuestion?.nextAfterSeconds,
+    stopExamTimer,
+    stopActiveSectionTimer,
+    startExamTimer,
+    startActiveSectionTimer,
+    autoNextQuestionAfter,
+  ]);
 
   if (!examInfo) return null;
 
@@ -78,8 +104,12 @@ const ExamLayout = ({ children }: Props) => {
         </div>
         <button onClick={() => endOfSection()}>end of section</button>
         <button onClick={() => nextQuestion()}>next question</button>
+        <span dir="ltr" className="text-white text-xs">
+          active question Id:
+          <span className="mr-2 font-bold">{activeQuestion?.questionId}</span>
+        </span>
       </nav>
-      <div className="p-4">{children}</div>
+      <Box className="p-4">{children}</Box>
     </div>
   );
 };

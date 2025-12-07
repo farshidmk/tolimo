@@ -1,5 +1,9 @@
 import { useExamStore } from "@/hooks/useExamStore";
+import { removeLeadingSlash } from "@/services/utils";
+import { useQuery } from "@tanstack/react-query";
 import React from "react";
+import ShowEmbeddedImageFileQuestion from "../../embeddedFile/ShowEmbeddedImageFileQuestion";
+import RenderEmbeddedFile from "../../embeddedFile/RenderEmbeddedFile";
 
 /**
  *
@@ -7,7 +11,25 @@ import React from "react";
  */
 const ListeningLecture = () => {
   const { activeQuestion } = useExamStore();
-  return <div>ListeningLecture</div>;
+
+  // useQuery({
+  //   queryKey: [removeLeadingSlash(activeQuestion. embeddedFile.fileName)],
+  // });
+
+  return (
+    <div className="flex flex-col">
+      {activeQuestion?.passages.map((passage) => (
+        <div key={passage.passageType}>
+          <div dangerouslySetInnerHTML={{ __html: passage.text }} />
+        </div>
+      ))}
+      {activeQuestion?.passages.map((passage) => (
+        <div key={passage.displayOrder} className="flex-1 flex flex-col">
+          <RenderEmbeddedFile renderVertically />
+        </div>
+      ))}
+    </div>
+  );
 };
 
 export default ListeningLecture;
