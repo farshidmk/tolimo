@@ -116,8 +116,6 @@ export type SectionQuestion = {
   waitingTime: number; // short در C# به عنوان number در TypeScript نمایندگی می‌شود.
 };
 
-
-
 /**
  * نماینده یک بخش برای سوالات، شامل ویژگی‌های مختلف مرتبط با محتوا و رفتار بخش.
  */
@@ -262,8 +260,3 @@ export enum PassageType {
    */
   Reading = 3,
 }
-
-
-
-
-

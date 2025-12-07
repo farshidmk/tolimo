@@ -16,11 +16,7 @@ const RenderChoiceList = ({ choiceList }: Props) => {
   if (choiceList.choiceMode === AnswerSelectionMode.SingleChoice) {
     return (
       <FormControl>
-        <RadioGroup
-          aria-labelledby="demo-radio-buttons-group-label"
-          defaultValue="female"
-          name="radio-buttons-group"
-        >
+        <RadioGroup>
           {choiceList.choices
             .sort((a, b) => a.order - b.order)
             .map((choice) => {

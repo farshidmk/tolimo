@@ -1,5 +1,6 @@
 "use client";
 import { convertStringTimeToSeconds } from "@/services/timeConvertor";
+import { QuestionAnswer } from "@/types/answer";
 import { Exam, ExamSection, SectionQuestion } from "@/types/exam";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
@@ -14,6 +15,10 @@ interface ExamState {
   activeSection: ExamSection | null;
   activeQuestion: SectionQuestion | null;
   questionAutoNextTimeLeft: number | null;
+
+  // Answers
+  answers: QuestionAnswer[];
+  currentAnswer: QuestionAnswer;
 
   // Timer References (not persisted)
   intervals: {
@@ -46,6 +51,8 @@ interface ExamState {
   showHelp: () => void;
   autoNextQuestionAfter: (seconds: number) => void;
 
+  answerQuestion: (answer: QuestionAnswer["answer"]) => void;
+
   // Cleanup
   clearAllTimers: () => void;
 }
@@ -63,7 +70,13 @@ export const useExamStore = create<ExamState>()(
       activeQuestion: null,
       questionAutoNextTimeLeft: null,
       intervals: { sections: {} },
-
+      answers: [],
+      currentAnswer: {
+        answer: "",
+        questionId: "",
+        isMarked: false,
+        isSubmited: false,
+      },
       // ==================== Initialization ====================
       initializeExam: (exam) => {
         // Clear any existing timers first
@@ -409,14 +422,38 @@ export const useExamStore = create<ExamState>()(
         get().startActiveSectionTimer();
       },
 
+      answerQuestion(answer) {
+        const activeQuestionId = get().activeQuestion?.questionId;
+        const answers = get().answers;
+        //TODO: send request -- for speaking should call /Assessment/SpeakingAnswer and for other call /Assessment/Answer
+        // for writing can read all data from form and with portal or using ref - check section isForce property and if its true dont store the answers
+        //TODO: store answer to storage
+      },
+
       submitAction: () => {
         console.log("Submitting exam...");
+        const activeQuestionId = get().activeQuestion?.questionId;
+        const answers = get().answers;
 
-        // Stop all timers
-        get().clearAllTimers();
-
-        // Here you would typically make an API call to submit the exam
-        // Example: await submitExamToBackend(get().sections);
+        const currentAnswerIndex = answers.findIndex(
+          (answer) => answer.questionId === activeQuestionId
+        );
+        if (currentAnswerIndex) {
+          answers[currentAnswerIndex] = {
+            ...answers[currentAnswerIndex],
+            isSubmited: true,
+          };
+          set(() => ({
+            answers,
+          }));
+        } else {
+          answers.push({
+            answer: undefined,
+            questionId: activeQuestionId!,
+            isMarked: false,
+            isSubmited: true,
+          });
+        }
       },
 
       reviewQuestions: () => {
