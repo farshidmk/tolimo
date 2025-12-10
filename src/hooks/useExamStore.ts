@@ -16,9 +16,8 @@ interface ExamState {
   activeQuestion: SectionQuestion | null;
   questionAutoNextTimeLeft: number | null;
 
-  // Answers
+  // Answers (only for active section)
   answers: QuestionAnswer[];
-  currentAnswer: QuestionAnswer;
 
   // Timer References (not persisted)
   intervals: {
@@ -51,7 +50,11 @@ interface ExamState {
   showHelp: () => void;
   autoNextQuestionAfter: (seconds: number) => void;
 
+  // Answer Management
   answerQuestion: (answer: QuestionAnswer["answer"]) => void;
+  toggleMarkQuestion: (questionId?: string) => void;
+  getQuestionAnswer: (questionId: string) => QuestionAnswer | undefined;
+  clearActiveSectionAnswers: () => void;
 
   // Cleanup
   clearAllTimers: () => void;
@@ -71,12 +74,6 @@ export const useExamStore = create<ExamState>()(
       questionAutoNextTimeLeft: null,
       intervals: { sections: {} },
       answers: [],
-      currentAnswer: {
-        answer: "",
-        questionId: "",
-        isMarked: false,
-        isSubmited: false,
-      },
       // ==================== Initialization ====================
       initializeExam: (exam) => {
         // Clear any existing timers first
@@ -362,11 +359,16 @@ export const useExamStore = create<ExamState>()(
 
         if (nextSection) {
           console.log("Moving to next section:", nextSection.sectionId);
+
+          // Clear answers from previous section (only keep active section answers)
+          get().clearActiveSectionAnswers();
+
           set({
             activeSectionId: nextSection.sectionId,
             activeSection: nextSection,
             activeQuestion: nextSection.questions[0] ?? null,
             sectionTimeLeft: nextSection.timeLeft,
+            answers: [], // Clear answers when moving to new section
           });
 
           // Start next section timer
@@ -422,38 +424,120 @@ export const useExamStore = create<ExamState>()(
         get().startActiveSectionTimer();
       },
 
+      // ==================== Answer Management ====================
       answerQuestion(answer) {
-        const activeQuestionId = get().activeQuestion?.questionId;
-        const answers = get().answers;
-        //TODO: send request -- for speaking should call /Assessment/SpeakingAnswer and for other call /Assessment/Answer
-        // for writing can read all data from form and with portal or using ref - check section isForce property and if its true dont store the answers
-        //TODO: store answer to storage
+        const { activeQuestion, activeSection, answers } = get();
+
+        if (!activeQuestion || !activeSection) {
+          console.warn("No active question or section");
+          return;
+        }
+
+        // Check if section allows answer storage
+        // If isForcedToAnswer is true, we don't store the answers
+        if (activeSection.isForcedToAnswer) {
+          console.log(
+            "Section has isForcedToAnswer=true, not storing answer locally"
+          );
+          return;
+        }
+
+        const questionId = activeQuestion.questionId;
+        const existingAnswerIndex = answers.findIndex(
+          (a) => a.questionId === questionId
+        );
+
+        if (existingAnswerIndex !== -1) {
+          // Update existing answer
+          const updatedAnswers = [...answers];
+          updatedAnswers[existingAnswerIndex] = {
+            ...updatedAnswers[existingAnswerIndex],
+            answer,
+          };
+          set({ answers: updatedAnswers });
+          console.log("Updated answer for question:", questionId);
+        } else {
+          // Add new answer
+          const newAnswer: QuestionAnswer = {
+            questionId,
+            answer,
+            isMarked: false,
+            isSubmited: false,
+          };
+          set({ answers: [...answers, newAnswer] });
+          console.log("Added new answer for question:", questionId);
+        }
+
+        //TODO: send request
+        // - For speaking: call /Assessment/SpeakingAnswer
+        // - For others: call /Assessment/Answer
+      },
+
+      toggleMarkQuestion(questionId) {
+        const { activeQuestion, answers } = get();
+        const targetQuestionId = questionId ?? activeQuestion?.questionId;
+
+        if (!targetQuestionId) {
+          console.warn("No question ID provided");
+          return;
+        }
+
+        const existingAnswerIndex = answers.findIndex(
+          (a) => a.questionId === targetQuestionId
+        );
+
+        if (existingAnswerIndex !== -1) {
+          // Toggle existing answer's mark
+          const updatedAnswers = [...answers];
+          updatedAnswers[existingAnswerIndex] = {
+            ...updatedAnswers[existingAnswerIndex],
+            isMarked: !updatedAnswers[existingAnswerIndex].isMarked,
+          };
+          set({ answers: updatedAnswers });
+          console.log(
+            "Toggled mark for question:",
+            targetQuestionId,
+            updatedAnswers[existingAnswerIndex].isMarked
+          );
+        } else {
+          // Create new answer entry with mark
+          const newAnswer: QuestionAnswer = {
+            questionId: targetQuestionId,
+            answer: undefined,
+            isMarked: true,
+            isSubmited: false,
+          };
+          set({ answers: [...answers, newAnswer] });
+          console.log("Created marked answer for question:", targetQuestionId);
+        }
+      },
+
+      getQuestionAnswer(questionId) {
+        const { answers } = get();
+        return answers.find((a) => a.questionId === questionId);
+      },
+
+      clearActiveSectionAnswers() {
+        set({ answers: [] });
+        console.log("Cleared answers for section transition");
       },
 
       submitAction: () => {
         console.log("Submitting exam...");
-        const activeQuestionId = get().activeQuestion?.questionId;
-        const answers = get().answers;
+        const { answers } = get();
 
-        const currentAnswerIndex = answers.findIndex(
-          (answer) => answer.questionId === activeQuestionId
-        );
-        if (currentAnswerIndex) {
-          answers[currentAnswerIndex] = {
-            ...answers[currentAnswerIndex],
-            isSubmited: true,
-          };
-          set(() => ({
-            answers,
-          }));
-        } else {
-          answers.push({
-            answer: undefined,
-            questionId: activeQuestionId!,
-            isMarked: false,
-            isSubmited: true,
-          });
-        }
+        // Mark all answers as submitted
+        const submittedAnswers = answers.map((answer) => ({
+          ...answer,
+          isSubmited: true,
+        }));
+
+        set({ answers: submittedAnswers });
+
+        //TODO: Send all answers to backend
+        // - Filter by question type (speaking vs others)
+        // - Call appropriate endpoints
+        console.log("Exam submitted with answers:", submittedAnswers);
       },
 
       reviewQuestions: () => {
@@ -548,6 +632,7 @@ export const useExamStore = create<ExamState>()(
         activeSection: state.activeSection,
         activeQuestion: state.activeQuestion,
         questionAutoNextTimeLeft: state.questionAutoNextTimeLeft,
+        answers: state.answers, // Persist answers for active section
       }),
     }
   )
