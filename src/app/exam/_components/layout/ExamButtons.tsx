@@ -13,8 +13,9 @@ const ExamButtons = () => {
     nextQuestion,
     continueAction,
     submitAction,
+    getQuestionAnswer,
   } = useExamStore();
-
+  const currentAnswer = getQuestionAnswer(activeQuestion?.questionId || "");
   const handleClick = (type: FormObjectType) => {
     switch (type) {
       case FormObjectType.Review:
@@ -62,7 +63,11 @@ const ExamButtons = () => {
             key={`${formObject.state}-${formObject.formObjectType}`}
             variant="contained"
             color="secondary"
-            disabled={formObject.state === FormObjectState.Deactive}
+            disabled={
+              currentAnswer?.isSubmited
+                ? false
+                : formObject.state === FormObjectState.Deactive
+            }
             onClick={() => {
               handleClick(formObject.formObjectType);
             }}

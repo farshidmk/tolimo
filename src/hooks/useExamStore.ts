@@ -435,12 +435,12 @@ export const useExamStore = create<ExamState>()(
 
         // Check if section allows answer storage
         // If isForcedToAnswer is true, we don't store the answers
-        if (activeSection.isForcedToAnswer) {
-          console.log(
-            "Section has isForcedToAnswer=true, not storing answer locally"
-          );
-          return;
-        }
+        // if (activeSection.isForcedToAnswer) {
+        //   console.log(
+        //     "Section has isForcedToAnswer=true, not storing answer locally"
+        //   );
+        //   return;
+        // }
 
         const questionId = activeQuestion.questionId;
         const existingAnswerIndex = answers.findIndex(
