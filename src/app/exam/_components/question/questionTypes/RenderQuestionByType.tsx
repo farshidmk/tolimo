@@ -31,6 +31,7 @@ const RenderQuestionByType = () => {
               <div dangerouslySetInnerHTML={{ __html: passage.text }} />
             </div>
           ))}
+          <RenderEmbeddedFile />
         </div>
       );
     case QuestionKind.SingleChoice:
@@ -41,6 +42,7 @@ const RenderQuestionByType = () => {
               <div dangerouslySetInnerHTML={{ __html: passage.text }} />
             </div>
           ))}
+          <RenderEmbeddedFile />
           <SingleChoiceQuestion />
         </div>
       );
@@ -55,17 +57,24 @@ const RenderQuestionByType = () => {
             </div>
           ))}
           <RenderChoiceList choiceList={activeQuestion.choiceList!} />
+          <RenderEmbeddedFile />
         </div>
       );
     case QuestionKind.Reading_SingleChoice:
       return (
-        <div>
-          {activeQuestion?.passages.map((passage) => (
-            <div key={passage.passageType}>
-              <div dangerouslySetInnerHTML={{ __html: passage.text }} />
-            </div>
-          ))}
-          <RenderCheckboxes choiceList={activeQuestion.choiceList!} />
+        <div className="flex gap-1">
+          <div className="flex-1 h-full overflow-auto">
+            {activeQuestion?.passages.map((passage) => (
+              <div key={passage.passageType}>
+                <div dangerouslySetInnerHTML={{ __html: passage.text }} />
+              </div>
+            ))}
+          </div>
+          <div className="w-0.5 bg-black items-stretch rounded-xl" />
+          <div className="flex-1  overflow-auto flex flex-col items-stretch justify-center">
+            <RenderCheckboxes choiceList={activeQuestion.choiceList!} />
+            <RenderEmbeddedFile />
+          </div>
         </div>
       );
     case QuestionKind.Writing_Lecture:
@@ -77,6 +86,7 @@ const RenderQuestionByType = () => {
             </div>
           ))}
           <RenderWriting />
+          <RenderEmbeddedFile />
         </div>
       );
     case QuestionKind.Speaking:
@@ -87,6 +97,7 @@ const RenderQuestionByType = () => {
               <div dangerouslySetInnerHTML={{ __html: passage.text }} />
             </div>
           ))}
+          <RenderEmbeddedFile />
           <RenderVoiceRecorder />
         </div>
       );

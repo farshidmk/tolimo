@@ -34,7 +34,7 @@ const ConfirmPage = () => {
 
   return (
     <div className="h-full w-full  flex flex-col gap-4 items-center justify-center">
-      <CheckVoiceRecorder />
+      {/* <CheckVoiceRecorder /> */}
       <Paper>
         <div className="h-full w-full  flex flex-col gap-4 items-center justify-center p-5 min-w-xl">
           <Typography variant="h6" textAlign={"center"}>

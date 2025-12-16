@@ -1,12 +1,14 @@
 import { useAudioStore } from "@/hooks/useAudioStore";
 import { useExamStore } from "@/hooks/useExamStore";
 import { convertSecondsToTime } from "@/services/timeConvertor";
+import { QuestionAnswer } from "@/types/answer";
 import { FormObjectState, FormObjectType } from "@/types/formObject";
 import { QuestionKind } from "@/types/question";
 import { ServerCall, ServerResponse } from "@/types/server";
 import { Box, Button, Popover, Slider, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import React, { useMemo } from "react";
+import ReviewQuestions from "./ReviewQuestions";
 
 const ExamButtons = () => {
   const {
@@ -21,25 +23,33 @@ const ExamButtons = () => {
     continueAction,
     submitAction,
     getQuestionAnswer,
+    toggleMarkQuestion,
   } = useExamStore();
 
   const formObject = useMemo(() => {
-    if (activeQuestion?.formObjects) {
+    if (activeQuestion?.formObjects && activeQuestion.formObjects.length > 0) {
       return activeQuestion.formObjects;
     }
     return activeSection?.formObjects;
   }, [activeQuestion?.formObjects, activeSection?.formObjects]);
 
   const { volume, setVolume } = useAudioStore();
-  const [volumeAnchorEl, setVolumeAnchorEl] =
-    React.useState<HTMLButtonElement | null>(null);
+  const [showActionDialog, setShowActionDialog] =
+    React.useState<LayoutActionDialog | null>(null);
   const { mutate, isPending } = useMutation<
     ServerResponse<string>,
     Error,
     ServerCall<FormData>
   >({});
 
-  const currentAnswer = getQuestionAnswer(activeQuestion?.questionId || "");
+  const currentAnswer: QuestionAnswer = getQuestionAnswer(
+    activeQuestion?.questionId || ""
+  ) ?? {
+    answer: "",
+    isMarked: false,
+    isSubmited: false,
+    questionId: activeQuestion?.questionId ?? "",
+  };
   const handleClick = (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     type: FormObjectType
@@ -48,12 +58,14 @@ const ExamButtons = () => {
       case FormObjectType.Review:
       case FormObjectType.ReviewTextButton:
       case FormObjectType.ReviewQuestionButton:
-        reviewQuestions();
+        // reviewQuestions();
+
+        setShowActionDialog({ type: "review", anchorEl: event.currentTarget });
         break;
 
       case FormObjectType.VolumeButton:
       case FormObjectType.VolumeControl:
-        setVolumeAnchorEl(event.currentTarget);
+        setShowActionDialog({ type: "sound", anchorEl: event.currentTarget });
         break;
 
       case FormObjectType.HelpButton:
@@ -111,6 +123,9 @@ const ExamButtons = () => {
       case FormObjectType.OkButton:
         submitAction();
         break;
+      case FormObjectType.MarkButton:
+        toggleMarkQuestion();
+        break;
 
       default:
         console.warn("No action defined for this FormObjectType:", type);
@@ -118,16 +133,23 @@ const ExamButtons = () => {
     }
   };
 
-  const open = Boolean(volumeAnchorEl);
+  const open = Boolean(showActionDialog);
   const id = open ? "simple-volume-controller" : undefined;
 
   return (
     <>
+      {showActionDialog && showActionDialog.type === "review" && (
+        <ReviewQuestions
+          anchorEl={showActionDialog.anchorEl}
+          type={showActionDialog.type}
+          handleClose={() => setShowActionDialog(null)}
+        />
+      )}
       <Popover
         id={id}
-        open={open}
-        anchorEl={volumeAnchorEl}
-        onClose={() => setVolumeAnchorEl(null)}
+        open={open && showActionDialog?.type === "sound"}
+        anchorEl={showActionDialog?.anchorEl}
+        onClose={() => setShowActionDialog(null)}
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "left",
@@ -166,8 +188,20 @@ const ExamButtons = () => {
           formObject.state === FormObjectState.NoDisplay ? null : (
             <Button
               key={`${formObject.state}-${formObject.formObjectType}`}
-              variant="contained"
-              color="secondary"
+              variant={
+                formObject.formObjectType !== FormObjectType.MarkButton
+                  ? "contained"
+                  : currentAnswer.isMarked
+                  ? "outlined"
+                  : "contained"
+              }
+              color={
+                formObject.formObjectType !== FormObjectType.MarkButton
+                  ? "secondary"
+                  : currentAnswer.isMarked
+                  ? "warning"
+                  : "secondary"
+              }
               loading={isPending}
               disabled={
                 currentAnswer?.isSubmited
@@ -188,3 +222,8 @@ const ExamButtons = () => {
 };
 
 export default ExamButtons;
+
+export type LayoutActionDialog = {
+  type: "review" | "sound";
+  anchorEl: HTMLButtonElement;
+};

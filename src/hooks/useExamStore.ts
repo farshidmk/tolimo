@@ -39,6 +39,7 @@ interface ExamState {
   prevQuestion: () => void;
   nextQuestion: () => void;
   endOfSection: () => void;
+  goToQuestion: (questionId: string) => void;
 
   // Actions
   updateAnsweredCount: (sectionId: string, value: number) => void;
@@ -342,6 +343,18 @@ export const useExamStore = create<ExamState>()(
           set({ activeQuestion: next });
           console.log("Moved to next question:", next.questionId);
         }
+      },
+      goToQuestion: (questionId: string) => {
+        const { activeSection } = get();
+        if (!activeSection) return;
+
+        const index = activeSection.questions.findIndex(
+          (q) => q.questionId === questionId
+        );
+        const next = activeSection.questions[index];
+
+        set({ activeQuestion: next });
+        console.log("Moved to question:", next.questionId);
       },
 
       endOfSection: () => {
