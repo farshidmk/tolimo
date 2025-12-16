@@ -67,13 +67,13 @@ const ExamButtons = () => {
       case FormObjectType.NextButton:
         // send question
         const formData = new FormData();
-        const type =
+        const questionType =
           activeQuestion!.questionType === QuestionKind.Writing_Lecture ||
           activeQuestion!.questionType ===
             QuestionKind.Writing_Lecture_WithAudio
             ? 0
             : 1;
-        formData.append("Type", String(type));
+        formData.append("Type", String(questionType));
         formData.append("Answer", String(currentAnswer?.answer));
         formData.append("QuestionId", String(activeQuestion!.questionId));
         formData.append(

@@ -2,7 +2,6 @@
 import { useExamStore } from "@/hooks/useExamStore";
 import { convertSecondsToTime } from "@/services/timeConvertor";
 import { Typography } from "@mui/material";
-import React, { useEffect } from "react";
 
 const SectionInfoInNavbar = () => {
   const { activeSection, activeQuestion, sectionTimeLeft } = useExamStore();

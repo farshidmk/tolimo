@@ -11,6 +11,7 @@ import ShowErrors from "@/components/errors/ShowErrors";
 import { Exam } from "@/types/exam";
 import { useExamStore } from "@/hooks/useExamStore";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import CheckVoiceRecorder from "./CheckVoiceRecorder";
 
 const ConfirmPage = () => {
   const { userInfo } = useAuth();
@@ -33,6 +34,7 @@ const ConfirmPage = () => {
 
   return (
     <div className="h-full w-full  flex flex-col gap-4 items-center justify-center">
+      <CheckVoiceRecorder />
       <Paper>
         <div className="h-full w-full  flex flex-col gap-4 items-center justify-center p-5 min-w-xl">
           <Typography variant="h6" textAlign={"center"}>
@@ -90,5 +92,3 @@ const ConfirmPage = () => {
 };
 
 export default ConfirmPage;
-
-const CONFIRM_TEXT = `اینجانب با رعایت کلیه موارد و قبول تمامی مقررات تایید به انجام آزمون مینمایم`;

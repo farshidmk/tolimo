@@ -7,6 +7,7 @@ import RenderChoiceList from "./RenderChoiceList";
 import RenderEmbeddedFile from "../embeddedFile/RenderEmbeddedFile";
 import RenderCheckboxes from "./RenderCheckboxes";
 import RenderWriting from "./RenderWriting";
+import RenderVoiceRecorder from "./voiceRecorder/RenderVoiceRecorder";
 
 const RenderQuestionByType = () => {
   const { activeQuestion } = useExamStore();
@@ -76,6 +77,17 @@ const RenderQuestionByType = () => {
             </div>
           ))}
           <RenderWriting />
+        </div>
+      );
+    case QuestionKind.Speaking:
+      return (
+        <div>
+          {activeQuestion?.passages.map((passage) => (
+            <div key={passage.passageType}>
+              <div dangerouslySetInnerHTML={{ __html: passage.text }} />
+            </div>
+          ))}
+          <RenderVoiceRecorder />
         </div>
       );
   }

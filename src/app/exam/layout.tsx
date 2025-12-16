@@ -1,13 +1,13 @@
 "use client";
 import { useExamStore } from "@/hooks/useExamStore";
-import React, { useEffect } from "react";
-import SectionInfoInNavbar from "./_components/layout/SectionInfoInNavbar";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { Box, Paper, Typography } from "@mui/material";
-import { convertSecondsToTime } from "@/services/timeConvertor";
-import ExamButtons from "./_components/layout/ExamButtons";
-import useStartQuestionTimes from "./_hooks/useStartQuestionTimes";
 import { calculatePercentage } from "@/services/percentage";
+import { convertSecondsToTime } from "@/services/timeConvertor";
+import { Box, Typography } from "@mui/material";
+import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useEffect } from "react";
+import ExamButtons from "./_components/layout/ExamButtons";
+import SectionInfoInNavbar from "./_components/layout/SectionInfoInNavbar";
+import useStartQuestionTimes from "./_hooks/useStartQuestionTimes";
 
 type Props = {
   children: React.ReactNode;
@@ -61,7 +61,7 @@ const ExamLayout = ({ children }: Props) => {
   if (!examInfo) return null;
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full flex flex-col overflow-auto">
       <nav className="h-20 flex bg-blue-400 ">
         <div className="h-full w-full flex items-center px-4">
           <div className="flex-1 flex items-center gap-2">
@@ -109,7 +109,7 @@ const ExamLayout = ({ children }: Props) => {
           <span className="mr-2 font-bold">{activeQuestion?.questionId}</span>
         </span>
       </nav>
-      <Box className="p-4">{children}</Box>
+      <Box className="p-4 flex-1 overflow-auto">{children}</Box>
     </div>
   );
 };
