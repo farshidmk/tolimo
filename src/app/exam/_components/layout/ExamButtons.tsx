@@ -6,10 +6,11 @@ import { QuestionKind } from "@/types/question";
 import { ServerCall, ServerResponse } from "@/types/server";
 import { Box, Button, Popover, Slider, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import React from "react";
+import React, { useMemo } from "react";
 
 const ExamButtons = () => {
   const {
+    activeSection,
     activeQuestion,
     sectionTimeLeft,
     examTimeLeft,
@@ -21,6 +22,13 @@ const ExamButtons = () => {
     submitAction,
     getQuestionAnswer,
   } = useExamStore();
+
+  const formObject = useMemo(() => {
+    if (activeQuestion?.formObjects) {
+      return activeQuestion.formObjects;
+    }
+    return activeSection?.formObjects;
+  }, [activeQuestion?.formObjects, activeSection?.formObjects]);
 
   const { volume, setVolume } = useAudioStore();
   const [volumeAnchorEl, setVolumeAnchorEl] =
@@ -154,7 +162,7 @@ const ExamButtons = () => {
         </Box>
       </Popover>
       <div className="flex items-center gap-2">
-        {activeQuestion?.formObjects.map((formObject) =>
+        {formObject?.map((formObject) =>
           formObject.state === FormObjectState.NoDisplay ? null : (
             <Button
               key={`${formObject.state}-${formObject.formObjectType}`}
