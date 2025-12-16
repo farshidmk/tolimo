@@ -6,6 +6,7 @@ import ListeningLecture from "./listening/ListeningLecture";
 import RenderChoiceList from "./RenderChoiceList";
 import RenderEmbeddedFile from "../embeddedFile/RenderEmbeddedFile";
 import RenderCheckboxes from "./RenderCheckboxes";
+import RenderWriting from "./RenderWriting";
 
 const RenderQuestionByType = () => {
   const { activeQuestion } = useExamStore();
@@ -64,6 +65,17 @@ const RenderQuestionByType = () => {
             </div>
           ))}
           <RenderCheckboxes choiceList={activeQuestion.choiceList!} />
+        </div>
+      );
+    case QuestionKind.Writing_Lecture:
+      return (
+        <div>
+          {activeQuestion?.passages.map((passage) => (
+            <div key={passage.passageType}>
+              <div dangerouslySetInnerHTML={{ __html: passage.text }} />
+            </div>
+          ))}
+          <RenderWriting />
         </div>
       );
   }
