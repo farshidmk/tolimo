@@ -5,6 +5,7 @@ import SingleChoiceQuestion from "./singleChoiceQuestion/SingleChoiceQuestion";
 import ListeningLecture from "./listening/ListeningLecture";
 import RenderChoiceList from "./RenderChoiceList";
 import RenderEmbeddedFile from "../embeddedFile/RenderEmbeddedFile";
+import RenderCheckboxes from "./RenderCheckboxes";
 
 const RenderQuestionByType = () => {
   const { activeQuestion } = useExamStore();
@@ -52,6 +53,17 @@ const RenderQuestionByType = () => {
             </div>
           ))}
           <RenderChoiceList choiceList={activeQuestion.choiceList!} />
+        </div>
+      );
+    case QuestionKind.Reading_SingleChoice:
+      return (
+        <div>
+          {activeQuestion?.passages.map((passage) => (
+            <div key={passage.passageType}>
+              <div dangerouslySetInnerHTML={{ __html: passage.text }} />
+            </div>
+          ))}
+          <RenderCheckboxes choiceList={activeQuestion.choiceList!} />
         </div>
       );
   }

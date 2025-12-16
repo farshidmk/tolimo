@@ -1,12 +1,18 @@
 import { useAudioStore } from "@/hooks/useAudioStore";
 import { useExamStore } from "@/hooks/useExamStore";
+import { convertSecondsToTime } from "@/services/timeConvertor";
 import { FormObjectState, FormObjectType } from "@/types/formObject";
+import { QuestionKind } from "@/types/question";
+import { ServerCall, ServerResponse } from "@/types/server";
 import { Box, Button, Popover, Slider, Typography } from "@mui/material";
-import React, { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import React from "react";
 
 const ExamButtons = () => {
   const {
     activeQuestion,
+    sectionTimeLeft,
+    examTimeLeft,
     reviewQuestions,
     showHelp,
     prevQuestion,
@@ -19,6 +25,11 @@ const ExamButtons = () => {
   const { volume, setVolume } = useAudioStore();
   const [volumeAnchorEl, setVolumeAnchorEl] =
     React.useState<HTMLButtonElement | null>(null);
+  const { mutate, isPending } = useMutation<
+    ServerResponse<string>,
+    Error,
+    ServerCall<FormData>
+  >({});
 
   const currentAnswer = getQuestionAnswer(activeQuestion?.questionId || "");
   const handleClick = (
@@ -46,10 +57,46 @@ const ExamButtons = () => {
         break;
 
       case FormObjectType.NextButton:
-        nextQuestion();
+        // send question
+        const formData = new FormData();
+        const type =
+          activeQuestion!.questionType === QuestionKind.Writing_Lecture ||
+          activeQuestion!.questionType ===
+            QuestionKind.Writing_Lecture_WithAudio
+            ? 0
+            : 1;
+        formData.append("Type", String(type));
+        formData.append("Answer", String(currentAnswer?.answer));
+        formData.append("QuestionId", String(activeQuestion!.questionId));
+        formData.append(
+          "SectionReminigTime",
+          String(convertSecondsToTime(sectionTimeLeft))
+        );
+        formData.append(
+          "ExamReminigTime",
+          String(convertSecondsToTime(examTimeLeft))
+        );
+
+        mutate(
+          {
+            url: "Assessment/Answer",
+            method: "POST",
+            data: formData,
+
+            headers: {
+              Accept: "multipart/form-data",
+            },
+          },
+          {
+            onSuccess: () => {
+              nextQuestion();
+            },
+          }
+        );
         break;
 
       case FormObjectType.ContinueButton:
+        console.log("continue");
         continueAction();
         break;
 
@@ -113,6 +160,7 @@ const ExamButtons = () => {
               key={`${formObject.state}-${formObject.formObjectType}`}
               variant="contained"
               color="secondary"
+              loading={isPending}
               disabled={
                 currentAnswer?.isSubmited
                   ? false
