@@ -9,6 +9,7 @@ import { Box, Button, Popover, Slider, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import React, { useMemo } from "react";
 import ReviewQuestions from "./ReviewQuestions";
+import { toast } from "react-toastify";
 
 const ExamButtons = () => {
   const {
@@ -16,7 +17,6 @@ const ExamButtons = () => {
     activeQuestion,
     sectionTimeLeft,
     examTimeLeft,
-    reviewQuestions,
     showHelp,
     prevQuestion,
     nextQuestion,
@@ -110,6 +110,9 @@ const ExamButtons = () => {
           {
             onSuccess: () => {
               nextQuestion();
+            },
+            onError: (err) => {
+              toast.error(err.message ?? "خطا در برقراری ارتباط با سرور");
             },
           }
         );

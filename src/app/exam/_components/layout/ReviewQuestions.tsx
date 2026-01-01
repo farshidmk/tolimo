@@ -1,8 +1,7 @@
-import { Box, IconButton, Popover, Slider, Typography } from "@mui/material";
-import React from "react";
-import { LayoutActionDialog } from "./ExamButtons";
 import { useExamStore } from "@/hooks/useExamStore";
+import { Box, Popover, Typography } from "@mui/material";
 import { grey } from "@mui/material/colors";
+import { LayoutActionDialog } from "./ExamButtons";
 
 type Props = {
   handleClose: () => void;
