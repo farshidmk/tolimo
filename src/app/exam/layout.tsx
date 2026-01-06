@@ -102,12 +102,18 @@ const ExamLayout = ({ children }: Props) => {
             </div>
           </div>
         </div>
-        <button onClick={() => endOfSection()}>end of section</button>
-        <button onClick={() => nextQuestion()}>next question</button>
-        <span dir="ltr" className="text-white text-xs">
-          active question Id:
-          <span className="mr-2 font-bold">{activeQuestion?.questionId}</span>
-        </span>
+        {process.env.NODE_ENV === "development" && (
+          <>
+            <button onClick={() => endOfSection()}>end of section</button>
+            <button onClick={() => nextQuestion()}>next question</button>
+            <span dir="ltr" className="text-white text-xs">
+              active question Id:
+              <span className="mr-2 font-bold">
+                {activeQuestion?.questionId}
+              </span>
+            </span>
+          </>
+        )}
       </nav>
       <Box className="p-4 flex-1 overflow-auto">{children}</Box>
     </div>
