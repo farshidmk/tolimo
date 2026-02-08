@@ -41,6 +41,10 @@ export type ExamSection = {
   sign: null;
   isRunning: boolean;
   timeLeft: number;
+  /**
+   * flag for identifying this section is last section - use in end button (form object) ExamButtons.tsx
+   */
+  isLastSection: boolean;
 };
 
 /**
@@ -121,6 +125,12 @@ export type SectionQuestion = {
    * براس والاتی استفاده میشود که نیاز هست به دواطلب فرصت آمادگی داده شود. مانند سوالات گفتاری
    */
   waitingTime: number; // short در C# به عنوان number در TypeScript نمایندگی می‌شود.
+
+  /**
+   * check is question is last question in section - need for end button in ExamButtons.tsx
+   *
+   */
+  isLastQuestion: boolean;
 };
 
 /**

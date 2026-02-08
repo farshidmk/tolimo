@@ -17,6 +17,7 @@ const ExamButtons = () => {
     activeQuestion,
     sectionTimeLeft,
     examTimeLeft,
+
     showHelp,
     prevQuestion,
     nextQuestion,
@@ -133,7 +134,33 @@ const ExamButtons = () => {
 
       case FormObjectType.ContinueButton:
         console.log("continue");
-        continueAction();
+
+        if (activeSection?.isLastSection && activeQuestion?.isLastQuestion) {
+          const formData = new FormData();
+          formData.append("EndDateTime", new Date().toISOString());
+          mutate(
+            {
+              url: "Assessment/End",
+              method: "POST",
+              data: formData,
+
+              headers: {
+                Accept: "multipart/form-data",
+              },
+            },
+            {
+              onSuccess: () => {
+                toast.success("آزمون با موفقیت پایان یافت");
+              },
+              onError: (err) => {
+                toast.error(err.message ?? "خطا در برقراری ارتباط با سرور");
+              },
+            }
+          );
+        } else {
+          continueAction();
+        }
+
         break;
 
       case FormObjectType.OkButton:

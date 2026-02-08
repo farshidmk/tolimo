@@ -1,18 +1,19 @@
 "use client";
 import { useExamStore } from "@/hooks/useExamStore";
 import { calculatePercentage } from "@/services/percentage";
-import { convertSecondsToTime } from "@/services/timeConvertor";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import ExamButtons from "./_components/layout/ExamButtons";
 import SectionInfoInNavbar from "./_components/layout/SectionInfoInNavbar";
+import TimeOver from "./_components/timeOver/TimeOver";
 import useStartQuestionTimes from "./_hooks/useStartQuestionTimes";
 
 type Props = {
   children: React.ReactNode;
 };
 const ExamLayout = ({ children }: Props) => {
+  const [isTimeOver, setIsTimeOver] = useState(false);
   // run timers
   useStartQuestionTimes();
   const {
@@ -57,6 +58,12 @@ const ExamLayout = ({ children }: Props) => {
     startActiveSectionTimer,
     autoNextQuestionAfter,
   ]);
+
+  useEffect(() => {
+    if (examTimeLeft <= 0) {
+      setIsTimeOver(true);
+    }
+  }, [examTimeLeft]);
 
   if (!examInfo) return null;
 
@@ -115,7 +122,9 @@ const ExamLayout = ({ children }: Props) => {
           </>
         )}
       </nav>
-      <Box className="p-4 flex-1 overflow-auto">{children}</Box>
+      <Box className="p-4 flex-1 overflow-auto">
+        {isTimeOver ? <TimeOver /> : children}
+      </Box>
     </div>
   );
 };

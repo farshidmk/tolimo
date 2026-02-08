@@ -10,7 +10,7 @@ const useAppTheme = () => {
     },
     palette: {
       primary: {
-        main: blue[700],
+        main: blue[900],
         light: "#e8f2ff",
         contrastText: "#ffffff",
       },

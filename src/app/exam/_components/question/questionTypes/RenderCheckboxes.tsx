@@ -34,7 +34,9 @@ const RenderCheckboxes = ({ choiceList }: Props) => {
                   <Checkbox
                     checked={isChecked}
                     onChange={() => {
-                      let tempAnswer = [...(currentAnswer!.answer as string[])];
+                      let tempAnswer = [
+                        ...((currentAnswer?.answer ?? []) as string[]),
+                      ];
                       if (isChecked) {
                         tempAnswer = (
                           (currentAnswer?.answer ?? []) as string[]

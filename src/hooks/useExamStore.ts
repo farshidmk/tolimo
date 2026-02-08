@@ -93,19 +93,23 @@ export const useExamStore = create<ExamState>()(
         // Sort and prepare sections with questions
         const sortedSections = sections
           .sort((a, b) => a.displayOrder - b.displayOrder)
-          .map((section) => ({
+          .map((section, i) => ({
             ...section,
             questions: section.questions
               .sort((a, b) => a.displayOrder - b.displayOrder)
-              .map((q) => ({
+              .map((q, questionIndex) => ({
                 ...q,
                 passages: q.passages.sort(
                   (a, b) => a.displayOrder - b.displayOrder
                 ),
+                // set last question flag for end button
+                isLastQuestion: questionIndex === section.questions.length - 1,
               })),
             answeredCount: 0,
             isRunning: false,
             timeLeft: convertStringTimeToSeconds(section.sectionDuration),
+            // set last section flag for end button
+            isLastSection: i === sections.length - 1,
           }));
 
         const firstSection = sortedSections[0];
