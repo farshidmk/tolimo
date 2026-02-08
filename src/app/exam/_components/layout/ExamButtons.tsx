@@ -24,6 +24,8 @@ const ExamButtons = () => {
     submitAction,
     getQuestionAnswer,
     toggleMarkQuestion,
+    showTimer,
+    hideTimer,
   } = useExamStore();
 
   const formObject = useMemo(() => {
@@ -79,14 +81,25 @@ const ExamButtons = () => {
       case FormObjectType.NextButton:
         // send question
         const formData = new FormData();
-        const questionType =
-          activeQuestion!.questionType === QuestionKind.Writing_Lecture ||
-          activeQuestion!.questionType ===
-            QuestionKind.Writing_Lecture_WithAudio
-            ? 0
-            : 1;
-        formData.append("Type", String(questionType));
-        formData.append("Answer", String(currentAnswer?.answer));
+        const isSpeaking =
+          activeQuestion?.questionType === QuestionKind.Speaking;
+        if (isSpeaking) {
+          formData.append(
+            "file",
+            currentAnswer.answer as Blob,
+            "recording.webm"
+          );
+        } else {
+          const questionType =
+            activeQuestion!.questionType === QuestionKind.Writing_Lecture ||
+            activeQuestion!.questionType ===
+              QuestionKind.Writing_Lecture_WithAudio
+              ? 0
+              : 1;
+          formData.append("Type", String(questionType));
+          formData.append("Answer", String(currentAnswer?.answer || "0")); // send "0" for description section, miss saeid confirmed to send 0
+        }
+
         formData.append("QuestionId", String(activeQuestion!.questionId));
         formData.append(
           "SectionReminigTime",
@@ -99,7 +112,7 @@ const ExamButtons = () => {
 
         mutate(
           {
-            url: "Assessment/Answer",
+            url: isSpeaking ? "Assessment/SpeakingAnswer" : "Assessment/Answer",
             method: "POST",
             data: formData,
 
@@ -128,6 +141,12 @@ const ExamButtons = () => {
         break;
       case FormObjectType.MarkButton:
         toggleMarkQuestion();
+        break;
+      case FormObjectType.TimerLabel:
+        showTimer();
+        break;
+      case FormObjectType.TimerHideButton:
+        hideTimer();
         break;
 
       default:

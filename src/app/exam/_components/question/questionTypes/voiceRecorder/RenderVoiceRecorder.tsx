@@ -1,28 +1,19 @@
 // components/Recorder.tsx
-import React, { useState, useRef } from "react";
-import styles from "./Recorder.module.css"; // CSS Module for styling
-import { Button, LinearProgress } from "@mui/material";
+import { useExamStore } from "@/hooks/useExamStore";
+import { convertSecondsToTime } from "@/services/timeConvertor";
 import MicIcon from "@mui/icons-material/Mic";
 import StopIcon from "@mui/icons-material/Stop";
-import { convertSecondsToTime } from "@/services/timeConvertor";
-import { useExamStore } from "@/hooks/useExamStore";
-import { useMutation } from "@tanstack/react-query";
-import { ServerCall, ServerResponse } from "@/types/server";
-import { toast } from "react-toastify";
+import { Button } from "@mui/material";
+import { useRef, useState } from "react";
+import styles from "./Recorder.module.css"; // CSS Module for styling
 
 const RenderVoiceRecorder = () => {
-  const { activeQuestion, sectionTimeLeft, examTimeLeft, nextQuestion } =
+  const { activeQuestion, sectionTimeLeft, examTimeLeft, answerQuestion } =
     useExamStore();
   const [recording, setRecording] = useState<boolean>(false);
   // const [audioURL, setAudioURL] = useState<string>("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-
-  const { mutate, isPending } = useMutation<
-    ServerResponse<string>,
-    Error,
-    ServerCall<FormData>
-  >({});
 
   const startRecording = async (): Promise<void> => {
     try {
@@ -72,32 +63,12 @@ const RenderVoiceRecorder = () => {
       String(convertSecondsToTime(examTimeLeft))
     );
 
-    mutate(
-      {
-        url: "Assessment/SpeakingAnswer",
-        method: "POST",
-        data: formData,
-
-        headers: {
-          Accept: "multipart/form-data",
-        },
-      },
-      {
-        onSuccess: () => {
-          nextQuestion();
-        },
-        onError: (err) => {
-          toast.error(err.message ?? "خطا در برقراری ارتباط با سرور");
-        },
-      }
-    );
+    answerQuestion(blob);
   };
 
   return (
     <div className={styles.container}>
-      {isPending ? (
-        <LinearProgress />
-      ) : recording ? (
+      {recording ? (
         <Button
           onClick={stopRecording}
           color="warning"

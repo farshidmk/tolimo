@@ -2,6 +2,7 @@
 import { convertStringTimeToSeconds } from "@/services/timeConvertor";
 import { QuestionAnswer } from "@/types/answer";
 import { Exam, ExamSection, SectionQuestion } from "@/types/exam";
+import { QuestionKind } from "@/types/question";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
@@ -18,6 +19,8 @@ interface ExamState {
 
   // Answers (only for active section)
   answers: QuestionAnswer[];
+
+  isTimerVisible: boolean;
 
   // Timer References (not persisted)
   intervals: {
@@ -59,6 +62,10 @@ interface ExamState {
 
   // Cleanup
   clearAllTimers: () => void;
+
+  // show/hide Timer
+  hideTimer: () => void;
+  showTimer: () => void;
 }
 
 export const useExamStore = create<ExamState>()(
@@ -75,6 +82,7 @@ export const useExamStore = create<ExamState>()(
       questionAutoNextTimeLeft: null,
       intervals: { sections: {} },
       answers: [],
+      isTimerVisible: true,
       // ==================== Initialization ====================
       initializeExam: (exam) => {
         // Clear any existing timers first
@@ -460,7 +468,18 @@ export const useExamStore = create<ExamState>()(
           (a) => a.questionId === questionId
         );
 
-        if (existingAnswerIndex !== -1) {
+        if (activeQuestion.questionType === QuestionKind.Speaking) {
+          set({
+            answers: [
+              {
+                questionId,
+                answer,
+                isMarked: false,
+                isSubmited: false,
+              },
+            ],
+          });
+        } else if (existingAnswerIndex !== -1) {
           // Update existing answer
           const updatedAnswers = [...answers];
           updatedAnswers[existingAnswerIndex] = {
@@ -630,6 +649,13 @@ export const useExamStore = create<ExamState>()(
         });
 
         console.log("All timers cleared");
+      },
+
+      hideTimer: () => {
+        set({ isTimerVisible: false });
+      },
+      showTimer: () => {
+        set({ isTimerVisible: true });
       },
     }),
     {

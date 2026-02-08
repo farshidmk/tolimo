@@ -8,7 +8,7 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useMutation } from "@tanstack/react-query";
 import { ServerCall, ServerResponse } from "@/types/server";
 import ShowErrors from "@/components/errors/ShowErrors";
-import { Exam } from "@/types/exam";
+import { Confirm } from "@/types/exam";
 import { useExamStore } from "@/hooks/useExamStore";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CheckVoiceRecorder from "./CheckVoiceRecorder";
@@ -20,14 +20,14 @@ const ConfirmPage = () => {
   const initializeExam = useExamStore((state) => state.initializeExam);
 
   const { mutate, error, isPending, data, status } = useMutation<
-    ServerResponse<Exam>,
+    ServerResponse<Confirm>,
     Error,
     ServerCall<void>
   >({});
 
   useEffect(() => {
     if (status === "success" && data?.isSuccessful) {
-      initializeExam(data.data);
+      initializeExam(data.data.booklet);
       router.push("/exam");
     }
   }, [data?.data, data?.isSuccessful, initializeExam, status]);

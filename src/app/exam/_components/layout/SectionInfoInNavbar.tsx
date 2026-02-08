@@ -5,7 +5,8 @@ import { QuestionKind } from "@/types/question";
 import { Typography } from "@mui/material";
 
 const SectionInfoInNavbar = () => {
-  const { activeSection, activeQuestion, sectionTimeLeft } = useExamStore();
+  const { activeSection, activeQuestion, sectionTimeLeft, isTimerVisible } =
+    useExamStore();
   /**
    * count only question that is really question - not in direction or ... kind
    */
@@ -30,7 +31,11 @@ const SectionInfoInNavbar = () => {
       <Typography variant="h6" sx={{ color: "white" }}>
         بخش: {activeSection?.title}
       </Typography>
-      <div className="bg-blue-100 py-2 px-4 rounded-xl flex items-center gap-2">
+      <div
+        className={`bg-blue-100 py-2 px-4 rounded-xl flex items-center gap-2 ${
+          isTimerVisible ? "" : "opacity-0"
+        }`}
+      >
         <Typography variant="body2">
           زمان: {convertSecondsToTime(sectionTimeLeft ?? 0)}
         </Typography>

@@ -2,6 +2,13 @@ import { ChoiceList } from "./choice";
 import { FormObject } from "./formObject";
 import { QuestionKind } from "./question";
 
+export type Confirm = {
+  booklet: Exam;
+  lastState: {
+    last: string;
+  };
+};
+
 export type Exam = {
   sections: ExamSection[];
   examTitle: string;

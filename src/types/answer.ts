@@ -3,7 +3,7 @@ import { SectionQuestion } from "./exam";
 export type QuestionAnswer = {
   questionId: SectionQuestion["questionId"];
 
-  answer: string | string[] | number | undefined;
+  answer: string | string[] | number | undefined | Blob;
 
   /**
    * کاربر اگر بخواهد میتواند سوال را

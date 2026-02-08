@@ -64,7 +64,7 @@ const ExamLayout = ({ children }: Props) => {
     <div className="h-full w-full flex flex-col overflow-auto">
       <nav className="h-20 flex bg-blue-400 ">
         <div className="h-full w-full flex items-center px-4">
-          <div className="flex-1 flex items-center gap-2">
+          <div className="flex-2 flex items-center gap-2">
             {activeQuestion && Boolean(activeQuestion?.nextAfterSeconds) && (
               <div className="h-14 w-14 rounded-full bg-white p-1 flex relative justify-center items-center overflow-hidden">
                 <div
@@ -93,14 +93,14 @@ const ExamLayout = ({ children }: Props) => {
             <SectionInfoInNavbar />
           </div>
 
-          <div className="flex-1 flex items-center justify-end">
+          {/* <div className="flex-1 flex items-center justify-end">
             <div className="w-32 py-1 px-4 rounded-xl flex flex-col text-white border border-white justify-center items-center">
               <Typography variant="body1">زمان آزمون</Typography>
               <Typography variant="caption">
                 {convertSecondsToTime(examTimeLeft)}
               </Typography>
             </div>
-          </div>
+          </div> */}
         </div>
         {process.env.NODE_ENV === "development" && (
           <>
