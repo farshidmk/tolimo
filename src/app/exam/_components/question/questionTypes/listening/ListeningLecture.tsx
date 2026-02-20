@@ -1,8 +1,4 @@
 import { useExamStore } from "@/hooks/useExamStore";
-import { removeLeadingSlash } from "@/services/utils";
-import { useQuery } from "@tanstack/react-query";
-import React from "react";
-import ShowEmbeddedImageFileQuestion from "../../embeddedFile/ShowEmbeddedImageFileQuestion";
 import RenderEmbeddedFile from "../../embeddedFile/RenderEmbeddedFile";
 
 /**
