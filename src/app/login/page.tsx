@@ -16,7 +16,7 @@ import { ServerCall, ServerResponse } from "@/types/server";
 import Cookies from "js-cookie";
 import { LoginFormItems, LoginResponse } from "./login.types";
 import RenderFormItem from "@/components/formItems/RenderFormItem";
-import { FormFieldInput } from "@/types/renderFormItem";
+import { FormTextFieldInput } from "@/types/renderFormItem";
 import { useAuth } from "@/providers/AuthProvider";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -167,9 +167,14 @@ const LoginPage = () => {
                       <RenderFormItem
                         {...item}
                         inputProps={
-                          { ...field, ...item.inputProps } as React.ComponentProps<"input">
+                          {
+                            ...field,
+                            ...item.inputProps,
+                          } as React.ComponentProps<"input">
                         }
-                        error={errors?.[item.name as keyof LoginFormItems]?.message}
+                        error={
+                          errors?.[item.name as keyof LoginFormItems]?.message
+                        }
                       />
                     )}
                   />
@@ -210,7 +215,7 @@ const LoginPage = () => {
 
 export default LoginPage;
 
-const PASSWORD_LOGIN_FORM: FormFieldInput<LoginFormItems>[] = [
+const PASSWORD_LOGIN_FORM: FormTextFieldInput<LoginFormItems>[] = [
   {
     name: "ApplicantId",
     inputType: "text",
